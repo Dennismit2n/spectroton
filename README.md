@@ -14,6 +14,7 @@ Eine Farbe rein, elf abgestimmte Stufen raus. Erzeugt perzeptuell gleichmäßige
 - Gamut-Mapping statt hartem Clipping — sRGB- und Display-P3-Warnung
 - Export als CSS Custom Properties, Tailwind, DTCG-Tokens oder reine HEX-Liste
 - Hintergrund folgt live der gewählten Palette
+- Hell, Dunkel, ein weicheres Dunkel oder automatisch nach Systemeinstellung
 - Merkt sich Palette und Regler zwischen den Sitzungen; Bibliothek für beliebig viele benannte Paletten — alles im Gerät, kein Konto
 - Palette als Link teilen: der komplette Zustand steckt in der URL, kein Server dazwischen
 - Installierbar als PWA, läuft komplett offline

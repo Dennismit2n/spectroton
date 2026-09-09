@@ -3,22 +3,76 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#17181a">
 <link rel="manifest" href="./manifest.webmanifest">
+<script>
+/* Vor dem ersten Rendern: gespeichertes Theme sofort setzen, sonst blitzt kurz das Standard-Theme auf. */
+(function () {
+  try {
+    var v = localStorage.getItem("spectroton.theme.v1");
+    var bg = { light: "#f2f3f5", dark: "#17181a", "soft-dark": "#2a2c30" };
+    if (bg[v]) {
+      document.documentElement.setAttribute("data-theme", v);
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute("content", bg[v]);
+    }
+  } catch (e) {}
+})();
+</script>
 <title>Spectroton — OKLCH-Farbrampen</title>
 <style>
   :root {
-    --bg: #17181a;
-    --panel: #202225;
-    --panel-2: #26282c;
-    --line: #33363b;
-    --ink: #eceef1;
-    --ink-dim: #9aa0a8;
-    --ink-faint: #6e747c;
-    --focus: #7cc4ff;
+    color-scheme: light;
+    --bg: #f2f3f5;
+    --panel: #ffffff;
+    --panel-2: #eceef1;
+    --line: #dcdfe3;
+    --rim: rgba(0,0,0,0.12);
+    --ink: #1a1b1e;
+    --ink-dim: #5a5f68;
+    --ink-faint: #8b909a;
+    --focus: #2b6cb0;
     --r: 10px;
     --row-h: 54px;
+  }
+
+  /* System bevorzugt Dunkel → automatisch die angenehmere Variante, nicht die härteste */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #2a2c30;
+      --panel: #34373c;
+      --panel-2: #3c3f45;
+      --line: #4a4e55;
+      --rim: rgba(255,255,255,0.18);
+      --ink: #f0f1f3;
+      --ink-dim: #b7bcc4;
+      --ink-faint: #888e97;
+      --focus: #8fd0ff;
+    }
+  }
+
+  /* Explizite Wahl schlägt beide oberen Regeln — [data-theme] hat eine höhere Spezifität als :root allein */
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f2f3f5; --panel: #ffffff; --panel-2: #eceef1; --line: #dcdfe3; --rim: rgba(0,0,0,0.12);
+    --ink: #1a1b1e; --ink-dim: #5a5f68; --ink-faint: #8b909a; --focus: #2b6cb0;
+  }
+  html[data-theme="soft-dark"] {
+    color-scheme: dark;
+    --bg: #2a2c30; --panel: #34373c; --panel-2: #3c3f45; --line: #4a4e55; --rim: rgba(255,255,255,0.18);
+    --ink: #f0f1f3; --ink-dim: #b7bcc4; --ink-faint: #888e97; --focus: #8fd0ff;
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #17181a; --panel: #202225; --panel-2: #26282c; --line: #33363b; --rim: rgba(255,255,255,0.18);
+    --ink: #eceef1; --ink-dim: #9aa0a8; --ink-faint: #6e747c; --focus: #7cc4ff;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
 
   * { box-sizing: border-box; }
@@ -69,6 +123,14 @@
   @keyframes adrift1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3vh); } }
   @keyframes adrift2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4vh); } }
 
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
   h1 {
     font-size: 1.05rem;
     font-weight: 600;
@@ -79,8 +141,32 @@
   .sub {
     color: var(--ink-faint);
     font-size: 0.8rem;
-    margin: 0 0 18px;
+    margin: 0;
   }
+
+  #theme {
+    flex: none;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 0.76rem;
+  }
+
+  .card > summary {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-dim);
+    cursor: pointer;
+    list-style: none;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 12px;
+  }
+  .card > summary::-webkit-details-marker { display: none; }
+  .card > summary::after { content: "+"; font-weight: 400; color: var(--ink-faint); font-size: 1rem; }
+  .card[open] > summary::after { content: "–"; }
+  .card:not([open]) > summary { margin-bottom: 0; }
 
   .card {
     background: var(--panel);
@@ -182,7 +268,7 @@
     min-height: 38px;
     cursor: pointer;
   }
-  .hit .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); flex: none; }
+  .hit .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--rim); flex: none; }
   .hit .code { color: var(--ink-faint); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
 
   /* --- Akzentfarben --- */
@@ -284,7 +370,7 @@
   }
   .lib-row:first-child { border-top: none; padding-top: 0; }
   .lib-dots { display: flex; gap: 3px; }
-  .lib-dots span { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); }
+  .lib-dots span { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--rim); }
   .lib-name { font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lib-name small { display: block; color: var(--ink-faint); font-size: 0.72rem; }
   .btn.mini { flex: none; min-height: 38px; padding: 0 12px; font-size: 0.8rem; }
@@ -424,8 +510,19 @@
   <div class="blob a3" id="aurora3"></div>
 </div>
 
-<h1>Spectroton</h1>
-<p class="sub">Eine Farbe rein, elf abgestimmte Stufen raus. Rechnet in OKLCH, prüft nach WCAG&nbsp;2.2, läuft offline.</p>
+<div class="topbar">
+  <div>
+    <h1>Spectroton</h1>
+    <p class="sub">Eine Farbe rein, elf abgestimmte Stufen raus. Rechnet in OKLCH, prüft nach WCAG&nbsp;2.2, läuft offline.</p>
+  </div>
+  <label for="theme" class="sr-only">Erscheinungsbild</label>
+  <select id="theme">
+    <option value="system">System</option>
+    <option value="light">Hell</option>
+    <option value="soft-dark">Helleres Dunkel</option>
+    <option value="dark">Dunkel</option>
+  </select>
+</div>
 
 <section class="card">
   <h2>Basisfarbe</h2>
@@ -515,15 +612,15 @@
   </div>
 </section>
 
-<section class="card">
-  <h2>Bibliothek</h2>
+<details class="card">
+  <summary>Bibliothek</summary>
   <div class="name-row">
     <input type="text" id="libName" placeholder="Name der Palette" spellcheck="false" autocomplete="off" aria-label="Name für die gespeicherte Palette">
     <button class="btn primary" id="libSave" type="button">Speichern</button>
   </div>
   <div id="libList"></div>
   <p class="readout" style="margin:10px 0 0">Gespeicherte Paletten bleiben im Gerät — kein Konto, kein Server.</p>
-</section>
+</details>
 
 <button class="btn" id="reset" type="button" style="width:100%;margin-bottom:14px">Alles zurücksetzen</button>
 
@@ -1422,6 +1519,45 @@ function importFromHash() {
   } catch { return false; }
 }
 
+/* ---------- Erscheinungsbild ---------- */
+
+const THEME_KEY = "spectroton.theme.v1";
+const THEME_BG = { light: "#f2f3f5", dark: "#17181a", "soft-dark": "#2a2c30" };
+const THEME_VALUES = ["system", "light", "soft-dark", "dark"];
+
+function setTheme(pref) {
+  if (!THEME_VALUES.includes(pref)) pref = "system";
+  const html = document.documentElement;
+  if (pref === "system") {
+    html.removeAttribute("data-theme");
+    const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setThemeColorMeta(dark ? THEME_BG["soft-dark"] : THEME_BG.light);
+  } else {
+    html.setAttribute("data-theme", pref);
+    setThemeColorMeta(THEME_BG[pref]);
+  }
+  $("theme").value = pref;
+  try { localStorage.setItem(THEME_KEY, pref); } catch { /* privater Modus — dann eben nur für diese Sitzung */ }
+}
+function setThemeColorMeta(hex) {
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute("content", hex);
+}
+function initTheme() {
+  let v = "system";
+  try {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (THEME_VALUES.includes(stored)) v = stored;
+  } catch { /* nichts gespeichert oder kein Zugriff — Standard bleibt System */ }
+  setTheme(v);
+}
+if (window.matchMedia) {
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if ($("theme").value === "system") setTheme("system");
+  });
+}
+$("theme").addEventListener("change", e => setTheme(e.target.value));
+
 /* ---------- Als App installierbar machen ---------- */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -1430,6 +1566,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* Start */
+initTheme();
 initHarmonyButtons();
 if (!importFromHash() && !loadState()) setBase("#3B82F6");
 syncControls();

@@ -137,7 +137,7 @@
   input[type="text"]:focus-visible,
   button:focus-visible,
   input[type="range"]:focus-visible,
-  #swatch:focus-visible,
+  input[type="color"]:focus-visible,
   .row:focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
@@ -185,6 +185,51 @@
   .hit .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); flex: none; }
   .hit .code { color: var(--ink-faint); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
 
+  /* --- Akzentfarben --- */
+  .accent-chips { display: flex; flex-wrap: wrap; gap: 12px; }
+  .accent-chip { position: relative; width: 44px; height: 44px; flex: none; }
+  .accent-chip input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 44px; height: 44px;
+    padding: 0;
+    border: 2px solid var(--line);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+  }
+  .accent-chip input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  .accent-chip input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+  .accent-chip input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
+  .accent-chip .rm {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--bg);
+    border: 2px solid var(--panel);
+    font-size: 0.75rem;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .harmony-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .harmony-btn {
+    flex: 1 1 auto;
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
   /* --- Rampe --- */
   .ramp-head {
     display: grid;
@@ -197,7 +242,7 @@
   .ramp-head span:nth-child(3),
   .ramp-head span:nth-child(4) { text-align: right; }
 
-  #ramp { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .ramp { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
 
   .row {
     display: grid;
@@ -365,6 +410,13 @@
 </section>
 
 <section class="card">
+  <h2>Akzentfarben</h2>
+  <div class="accent-chips" id="accentChips"></div>
+  <div class="harmony-row" id="accentAdd"></div>
+  <p class="readout" style="margin:10px 0 0">Optional — zusätzliche Farben, die zur Basis passen. Jede bekommt ihre eigene Rampe, gleiche Feinjustage.</p>
+</section>
+
+<section class="card">
   <h2>Farbname</h2>
   <div class="name-row">
     <input type="text" id="nameInput" placeholder="Königsblau, Verkehrsrot …" spellcheck="false" autocomplete="off" aria-label="Farbe über den Namen suchen">
@@ -380,14 +432,8 @@
   <p class="readout" id="nameOut" style="margin:10px 0 0"></p>
 </section>
 
-<section class="card">
-  <h2>Stufen</h2>
-  <div class="ramp-head">
-    <span>Stufe</span><span>Farbe</span><span>auf&nbsp;Weiß</span><span>auf&nbsp;Schwarz</span>
-  </div>
-  <div id="ramp"></div>
-  <p class="readout" style="margin:10px 0 0">Tippen kopiert den HEX-Wert. Zahlen sind WCAG-Kontrastverhältnisse; ab 4.5 trägt Fließtext, ab 3.0 große Schrift und Bedienelemente.</p>
-</section>
+<p class="readout" style="margin:0 0 10px">Tippen kopiert den HEX-Wert. Zahlen sind WCAG-Kontrastverhältnisse; ab 4.5 trägt Fließtext, ab 3.0 große Schrift und Bedienelemente.</p>
+<div id="rampsHost"></div>
 
 <section class="card">
   <h2>Feinjustage</h2>
@@ -565,9 +611,72 @@ function contrast(hexA, hexB) {
 
 const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
-const state = { hex: "#3B82F6", H: 0, lmax: 0.97, lmin: 0.21, cmax: 0.16, hshift: 0, fmt: "css" };
+const state = {
+  colors: [{ hex: "#3B82F6", H: 0 }],
+  lmax: 0.97, lmin: 0.21, cmax: 0.16, hshift: 0, fmt: "css"
+};
 
-function buildRamp() {
+/* ---------- Akzentfarben: Harmonie-Vorschläge in OKLCH-Hue-Raum ---------- */
+
+const HARMONIES = {
+  comp:   { label: "Komplementär", offsets: [180] },
+  triad:  { label: "Triadisch",    offsets: [120, 240] },
+  analog: { label: "Analog",       offsets: [30, -30] },
+  split:  { label: "Split-Komp.",  offsets: [150, 210] }
+};
+
+function angleDist(a, b) {
+  const d = Math.abs(a - b) % 360;
+  return Math.min(d, 360 - d);
+}
+
+/* Nächster freier Punkt für eine Harmonie, relativ zur Primärfarbe.
+   Sind alle Standardpunkte schon belegt, wird leicht nachjustiert statt zu duplizieren. */
+function nextHarmonyHue(kind) {
+  const base = state.colors[0].H;
+  const { offsets } = HARMONIES[kind];
+  const existing = state.colors.slice(1).map(c => c.H);
+  for (const off of offsets) {
+    const h = (base + off + 360) % 360;
+    if (!existing.some(e => angleDist(e, h) < 8)) return h;
+  }
+  const jitter = existing.length * 17;
+  return (base + offsets[0] + jitter + 360) % 360;
+}
+
+function addAccent(H) {
+  const hex = oklchToHex(0.62, Math.max(state.cmax, 0.08), H);
+  state.colors.push({ hex, H });
+  render();
+}
+
+function removeAccent(i) {
+  state.colors.splice(i, 1);
+  render();
+}
+
+function editAccent(i, hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return;
+  const norm = rgbToHex(rgb);
+  const c = hexToOklch(norm);
+  state.colors[i].hex = norm;
+  state.colors[i].H = c.H;
+  render();
+}
+
+function colorLabel(i) {
+  return i === 0 ? "Primär" : `Akzent ${i}`;
+}
+
+/* Export-Namenssegment: bei nur einer Farbe bleibt der Name unverändert wie bisher,
+   erst ab zwei Farben bekommt jede ihr eigenes Segment. */
+function colorSlug(i, total) {
+  if (total === 1) return null;
+  return i === 0 ? "primary" : `accent-${i}`;
+}
+
+function buildRamp(baseH) {
   const n = STEPS.length;
   return STEPS.map((step, i) => {
     const t = i / (n - 1);
@@ -575,7 +684,7 @@ function buildRamp() {
     const L = state.lmax - (state.lmax - state.lmin) * Math.pow(t, 1.15);
     // Buntheit: Glocke mit Maximum in der Mitte, Enden bleiben bei 35 %
     const C = state.cmax * (0.35 + 0.65 * Math.sin(Math.PI * Math.pow(t, 0.9)));
-    const H = (state.H + state.hshift * (t - 0.5) * 2 + 360) % 360;
+    const H = (baseH + state.hshift * (t - 0.5) * 2 + 360) % 360;
 
     const wanted = C;
     const C2 = clampChroma(L, C, H);
@@ -597,8 +706,7 @@ const $ = id => document.getElementById(id);
 const fmtNum = (v, d = 2) => v.toFixed(d);
 const ok = (L, C, H) => `oklch(${(L * 100).toFixed(1)}% ${C.toFixed(4)} ${H.toFixed(1)})`;
 
-function renderRamp(ramp) {
-  const host = $("ramp");
+function renderRamp(ramp, host) {
   host.textContent = "";
   ramp.forEach(s => {
     const onDark = s.cw >= s.cb;           // heller Text liest sich besser?
@@ -622,45 +730,132 @@ function renderRamp(ramp) {
   });
 }
 
-function exportText(ramp) {
+function renderAccentChips() {
+  const chips = $("accentChips");
+  chips.textContent = "";
+  state.colors.slice(1).forEach((c, idx) => {
+    const i = idx + 1;
+    const wrap = document.createElement("div");
+    wrap.className = "accent-chip";
+
+    const input = document.createElement("input");
+    input.type = "color";
+    input.value = c.hex.toLowerCase();
+    input.setAttribute("aria-label", `Akzent ${i}, Farbe ändern`);
+    input.addEventListener("input", e => editAccent(i, e.target.value));
+
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "rm";
+    rm.textContent = "×";
+    rm.setAttribute("aria-label", `Akzent ${i} entfernen`);
+    rm.addEventListener("click", () => removeAccent(i));
+
+    wrap.appendChild(input);
+    wrap.appendChild(rm);
+    chips.appendChild(wrap);
+  });
+
+  const add = $("accentAdd");
+  add.textContent = "";
+  Object.entries(HARMONIES).forEach(([key, h]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "harmony-btn";
+    b.textContent = h.label;
+    b.addEventListener("click", () => addAccent(nextHarmonyHue(key)));
+    add.appendChild(b);
+  });
+}
+
+/* Baut für jede Farbe der Palette eine eigene Rampen-Karte und liefert
+   die Rohdaten gleich mit zurück, damit der Export sie weiterverwenden kann. */
+function renderAllRamps() {
+  const host = $("rampsHost");
+  host.textContent = "";
+  const results = [];
+  state.colors.forEach((c, i) => {
+    const ramp = buildRamp(c.H);
+    results.push({ label: colorLabel(i), hex: c.hex, ramp });
+
+    const section = document.createElement("section");
+    section.className = "card";
+    section.innerHTML =
+      `<h2>${colorLabel(i)} · ${c.hex}</h2>` +
+      `<div class="ramp-head"><span>Stufe</span><span>Farbe</span><span>auf&nbsp;Weiß</span><span>auf&nbsp;Schwarz</span></div>` +
+      `<div class="ramp"></div>`;
+    renderRamp(ramp, section.querySelector(".ramp"));
+    host.appendChild(section);
+  });
+  return results;
+}
+
+function exportText(results) {
   const p = ($("prefix").value.trim() || "brand").replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
+  const total = results.length;
+
   if (state.fmt === "css") {
-    const lines = ramp.map(s => `  --${p}-${s.step}: ${ok(s.L, s.C, s.H)};`);
-    const fb = ramp.map(s => `  --${p}-${s.step}: ${s.hex};`);
-    return `:root {\n${fb.join("\n")}\n}\n\n@supports (color: oklch(0% 0 0)) {\n  :root {\n${lines.map(l => "  " + l).join("\n")}\n  }\n}\n`;
+    const fb = [], ok2 = [];
+    results.forEach((r, i) => {
+      const slug = colorSlug(i, total);
+      const seg = slug ? `${p}-${slug}` : p;
+      r.ramp.forEach(s => {
+        fb.push(`  --${seg}-${s.step}: ${s.hex};`);
+        ok2.push(`    --${seg}-${s.step}: ${ok(s.L, s.C, s.H)};`);
+      });
+    });
+    return `:root {\n${fb.join("\n")}\n}\n\n@supports (color: oklch(0% 0 0)) {\n  :root {\n${ok2.join("\n")}\n  }\n}\n`;
   }
+
   if (state.fmt === "tw") {
-    const body = ramp.map(s => `          ${s.step}: "${s.hex}",`).join("\n");
-    return `// tailwind.config.js\nmodule.exports = {\n  theme: {\n    extend: {\n      colors: {\n        ${p}: {\n${body}\n        },\n      },\n    },\n  },\n};\n`;
+    const groups = results.map((r, i) => {
+      const slug = colorSlug(i, total);
+      const key = slug ? `${p}-${slug}` : p;
+      const body = r.ramp.map(s => `          ${s.step}: "${s.hex}",`).join("\n");
+      return `        "${key}": {\n${body}\n        },`;
+    }).join("\n");
+    return `// tailwind.config.js\nmodule.exports = {\n  theme: {\n    extend: {\n      colors: {\n${groups}\n      },\n    },\n  },\n};\n`;
   }
+
   if (state.fmt === "json") {
-    const obj = { [p]: {} };
-    ramp.forEach(s => {
-      obj[p][s.step] = {
-        $type: "color",
-        $value: s.hex,
-        $extensions: { "de.spectroton.oklch": ok(s.L, s.C, s.H) }
-      };
+    const obj = {};
+    results.forEach((r, i) => {
+      const slug = colorSlug(i, total) || p;
+      obj[slug] = {};
+      r.ramp.forEach(s => {
+        obj[slug][s.step] = {
+          $type: "color",
+          $value: s.hex,
+          $extensions: { "de.spectroton.oklch": ok(s.L, s.C, s.H) }
+        };
+      });
     });
     return JSON.stringify(obj, null, 2) + "\n";
   }
-  return ramp.map(s => s.hex).join("\n") + "\n";
+
+  if (total === 1) return results[0].ramp.map(s => s.hex).join("\n") + "\n";
+  return results.map(r => `# ${r.label} — ${r.hex}\n` + r.ramp.map(s => s.hex).join("\n")).join("\n\n") + "\n";
 }
 
+/* Aurora nutzt die echten Akzentfarben, sobald welche existieren;
+   ohne Akzente greift der bisherige synthetische Versatz. */
 function updateAurora() {
-  const h = state.H;
-  $("aurora1").style.background = oklchToHex(0.52, 0.13, h);
-  $("aurora2").style.background = oklchToHex(0.40, 0.13, (h + 150) % 360);
-  $("aurora3").style.background = oklchToHex(0.64, 0.10, (h + 30) % 360);
+  const h0 = state.colors[0].H;
+  const h1 = state.colors[1] ? state.colors[1].H : (h0 + 150) % 360;
+  const h2 = state.colors[2] ? state.colors[2].H : (h0 + 30) % 360;
+  $("aurora1").style.background = oklchToHex(0.52, 0.13, h0);
+  $("aurora2").style.background = oklchToHex(0.40, 0.13, h1);
+  $("aurora3").style.background = oklchToHex(0.64, 0.10, h2);
 }
 
 function render() {
-  const ramp = buildRamp();
-  renderRamp(ramp);
+  renderAccentChips();
+  const results = renderAllRamps();
   updateAurora();
 
-  const base = hexToOklch(state.hex);
-  const nearest = ramp.reduce((a, b) => Math.abs(b.L - base.L) < Math.abs(a.L - base.L) ? b : a);
+  const primary = state.colors[0];
+  const base = hexToOklch(primary.hex);
+  const nearest = results[0].ramp.reduce((a, b) => Math.abs(b.L - base.L) < Math.abs(a.L - base.L) ? b : a);
   $("baseOut").textContent = `${ok(base.L, base.C, base.H)} · liegt bei Stufe ${nearest.step}`;
 
   $("lmaxV").textContent = Math.round(state.lmax * 100) + " %";
@@ -668,7 +863,7 @@ function render() {
   $("cmaxV").textContent = state.cmax.toFixed(2);
   $("hshiftV").textContent = (state.hshift > 0 ? "+" : "") + state.hshift + "°";
 
-  $("out").value = exportText(ramp);
+  $("out").value = exportText(results);
 }
 
 /* ---------- Eingaben ---------- */
@@ -677,9 +872,9 @@ function setBase(hex) {
   const rgb = hexToRgb(hex);
   if (!rgb) return false;
   const norm = rgbToHex(rgb);
-  state.hex = norm;
   const c = hexToOklch(norm);
-  state.H = c.H;
+  state.colors[0].hex = norm;
+  state.colors[0].H = c.H;
   state.cmax = Math.max(0.02, Math.min(0.37, Math.round(c.C * 100) / 100));
   $("cmax").value = Math.round(state.cmax * 100);
   $("swatch").value = norm.toLowerCase();
@@ -688,7 +883,7 @@ function setBase(hex) {
 
 $("swatch").addEventListener("input", e => {
   setBase(e.target.value);
-  $("hexInput").value = state.hex;
+  $("hexInput").value = state.colors[0].hex;
   render();
   scheduleLookup();
 });
@@ -696,7 +891,7 @@ $("swatch").addEventListener("input", e => {
 $("hexInput").addEventListener("input", e => {
   if (setBase(e.target.value)) { render(); scheduleLookup(); }
 });
-$("hexInput").addEventListener("blur", () => { $("hexInput").value = state.hex; });
+$("hexInput").addEventListener("blur", () => { $("hexInput").value = state.colors[0].hex; });
 
 [["lmax", v => state.lmax = v / 100],
  ["lmin", v => state.lmin = v / 100],
@@ -821,7 +1016,7 @@ function debounce(fn, ms) {
 /* Wie heißt die aktuelle Basisfarbe? */
 async function lookupName() {
   const out = $("nameOut");
-  const hex = state.hex.slice(1).toLowerCase();
+  const hex = state.colors[0].hex.slice(1).toLowerCase();
   out.textContent = "sucht Namen …";
   try {
     const r = await fetch(`${API}/?values=${hex}&list=${listName()}`);
@@ -859,7 +1054,7 @@ async function searchName(q) {
       b.innerHTML = `<span class="dot" style="background:${c.hex}"></span><span>${c.name}</span><span class="code">${c.hex.toUpperCase()}</span>`;
       b.addEventListener("click", () => {
         setBase(c.hex);
-        $("hexInput").value = state.hex;
+        $("hexInput").value = state.colors[0].hex;
         render();
         note(c.name + " übernommen");
         lookupName();
@@ -892,7 +1087,7 @@ if ("serviceWorker" in navigator) {
 
 /* Start */
 setBase("#3B82F6");
-$("hexInput").value = state.hex;
+$("hexInput").value = state.colors[0].hex;
 $("lmax").value = 97; $("lmin").value = 21; $("hshift").value = 0;
 render();
 lookupName();

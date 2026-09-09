@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#17181a">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Spectroton — OKLCH-Farbrampen</title>
+<style>
+  :root {
+    --bg: #17181a;
+    --panel: #202225;
+    --panel-2: #26282c;
+    --line: #33363b;
+    --ink: #eceef1;
+    --ink-dim: #9aa0a8;
+    --ink-faint: #6e747c;
+    --focus: #7cc4ff;
+    --r: 10px;
+    --row-h: 54px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    background: var(--bg);
+  }
+
+  html, body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, "Roboto", sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: transparent;
+    padding: 16px 14px calc(28px + env(safe-area-inset-bottom));
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* --- Aurora: Hintergrund folgt der Basisfarbe --- */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .aurora .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.5;
+    transition: background 0.9s ease;
+  }
+  .aurora .a1 { width: 70vw; height: 60vh; top: -18vh; left: -20vw; }
+  .aurora .a2 { width: 56vw; height: 54vh; bottom: -20vh; right: -14vw; }
+  .aurora .a3 { width: 30vw; height: 32vh; top: 30vh; right: -8vw; opacity: 0.32; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .aurora .a1 { animation: adrift1 34s ease-in-out infinite; }
+    .aurora .a2 { animation: adrift2 40s ease-in-out infinite; }
+  }
+  @keyframes adrift1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3vh); } }
+  @keyframes adrift2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4vh); } }
+
+  h1 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 0 0 2px;
+  }
+
+  .sub {
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    margin: 0 0 18px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .card h2 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-dim);
+    margin: 0 0 12px;
+  }
+
+  /* --- Basisfarbe --- */
+  .base {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  #swatch {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 88px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+  }
+  #swatch::-webkit-color-swatch-wrapper { padding: 0; }
+  #swatch::-webkit-color-swatch { border: none; border-radius: 7px; }
+  #swatch::-moz-color-swatch { border: none; border-radius: 7px; }
+
+  .base-fields { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  input[type="text"]:focus-visible,
+  button:focus-visible,
+  input[type="range"]:focus-visible,
+  #swatch:focus-visible,
+  .row:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .readout {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
+    font-size: 0.82rem;
+    padding-left: 2px;
+  }
+
+  /* --- Farbname --- */
+  .name-row { display: grid; grid-template-columns: 1fr 118px; gap: 8px; }
+
+  select {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 10px 8px;
+    min-height: 44px;
+  }
+  select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  #hits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  #hits:empty { margin-top: 0; }
+
+  .hit {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 12px 7px 8px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    min-height: 38px;
+    cursor: pointer;
+  }
+  .hit .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); flex: none; }
+  .hit .code { color: var(--ink-faint); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
+
+  /* --- Rampe --- */
+  .ramp-head {
+    display: grid;
+    grid-template-columns: 46px 1fr 52px 52px;
+    gap: 8px;
+    padding: 0 12px 6px;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+  }
+  .ramp-head span:nth-child(3),
+  .ramp-head span:nth-child(4) { text-align: right; }
+
+  #ramp { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+
+  .row {
+    display: grid;
+    grid-template-columns: 46px 1fr 52px 52px;
+    gap: 8px;
+    align-items: center;
+    min-height: var(--row-h);
+    padding: 0 12px;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .row .step { font-weight: 600; opacity: 0.85; }
+  .row .hex { letter-spacing: 0.02em; }
+  .row .cw, .row .cb { text-align: right; font-size: 0.8rem; opacity: 0.9; }
+  .row .fail { opacity: 0.42; }
+  .row .flag {
+    font-size: 0.68rem;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 0 4px;
+    margin-left: 6px;
+    opacity: 0.75;
+  }
+
+  /* --- Regler --- */
+  .ctrl { margin-bottom: 14px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+  .ctrl label b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 30px;
+    background: none;
+    margin: 0;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 2px; background: var(--line);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 4px; border-radius: 2px; background: var(--line);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px; height: 26px; margin-top: -11px;
+    border-radius: 50%; background: var(--ink); border: none; cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 26px; height: 26px;
+    border-radius: 50%; background: var(--ink); border: none; cursor: pointer;
+  }
+
+  /* --- Export --- */
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tab {
+    flex: 1 1 auto;
+    min-height: 40px;
+    padding: 8px 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink-dim);
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+
+  textarea {
+    width: 100%;
+    min-height: 190px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    padding: 12px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.76rem;
+    line-height: 1.55;
+    resize: vertical;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+  }
+
+  .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 120px;
+    min-height: 46px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+  .btn:active { transform: translateY(1px); }
+
+  .prefix-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .prefix-row .field label { display: block; font-size: 0.75rem; color: var(--ink-faint); margin-bottom: 4px; }
+
+  #note {
+    position: fixed;
+    left: 50%;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(14px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    max-width: 90vw;
+    text-align: center;
+  }
+  #note.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer { color: var(--ink-faint); font-size: 0.74rem; line-height: 1.6; margin-top: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #note { transition: none; }
+    .btn:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <div class="blob a1" id="aurora1"></div>
+  <div class="blob a2" id="aurora2"></div>
+  <div class="blob a3" id="aurora3"></div>
+</div>
+
+<h1>Spectroton</h1>
+<p class="sub">Eine Farbe rein, elf abgestimmte Stufen raus. Rechnet in OKLCH, prüft nach WCAG&nbsp;2.2, läuft offline.</p>
+
+<section class="card">
+  <h2>Basisfarbe</h2>
+  <div class="base">
+    <input type="color" id="swatch" value="#3b82f6" aria-label="Basisfarbe wählen">
+    <div class="base-fields">
+      <input type="text" id="hexInput" value="#3B82F6" spellcheck="false" autocomplete="off" aria-label="Basisfarbe als HEX-Wert">
+      <div class="readout" id="baseOut"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Farbname</h2>
+  <div class="name-row">
+    <input type="text" id="nameInput" placeholder="Königsblau, Verkehrsrot …" spellcheck="false" autocomplete="off" aria-label="Farbe über den Namen suchen">
+    <select id="nameList" aria-label="Namensliste">
+      <option value="german">Deutsch</option>
+      <option value="mlmc_german">Deutsch +</option>
+      <option value="ral">RAL</option>
+      <option value="default">Alle 31 914</option>
+      <option value="wikipedia">Wikipedia</option>
+    </select>
+  </div>
+  <div id="hits"></div>
+  <p class="readout" id="nameOut" style="margin:10px 0 0"></p>
+</section>
+
+<section class="card">
+  <h2>Stufen</h2>
+  <div class="ramp-head">
+    <span>Stufe</span><span>Farbe</span><span>auf&nbsp;Weiß</span><span>auf&nbsp;Schwarz</span>
+  </div>
+  <div id="ramp"></div>
+  <p class="readout" style="margin:10px 0 0">Tippen kopiert den HEX-Wert. Zahlen sind WCAG-Kontrastverhältnisse; ab 4.5 trägt Fließtext, ab 3.0 große Schrift und Bedienelemente.</p>
+</section>
+
+<section class="card">
+  <h2>Feinjustage</h2>
+  <div class="ctrl">
+    <label for="lmax">Hellste Stufe <b id="lmaxV"></b></label>
+    <input type="range" id="lmax" min="85" max="99" step="1" value="97">
+  </div>
+  <div class="ctrl">
+    <label for="lmin">Dunkelste Stufe <b id="lminV"></b></label>
+    <input type="range" id="lmin" min="10" max="45" step="1" value="21">
+  </div>
+  <div class="ctrl">
+    <label for="cmax">Buntheit <b id="cmaxV"></b></label>
+    <input type="range" id="cmax" min="0" max="37" step="1" value="16">
+  </div>
+  <div class="ctrl">
+    <label for="hshift">Farbdrift über die Rampe <b id="hshiftV"></b></label>
+    <input type="range" id="hshift" min="-30" max="30" step="1" value="0">
+  </div>
+</section>
+
+<section class="card">
+  <h2>Export</h2>
+  <div class="prefix-row">
+    <div class="field">
+      <label for="prefix">Name</label>
+      <input type="text" id="prefix" value="brand" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="filename">Datei</label>
+      <input type="text" id="filename" value="colors.css" spellcheck="false" autocomplete="off">
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-fmt="css" aria-selected="true">CSS</button>
+    <button class="tab" role="tab" data-fmt="tw" aria-selected="false">Tailwind</button>
+    <button class="tab" role="tab" data-fmt="json" aria-selected="false">Tokens</button>
+    <button class="tab" role="tab" data-fmt="hex" aria-selected="false">HEX</button>
+  </div>
+  <textarea id="out" readonly spellcheck="false" aria-label="Exportierter Code"></textarea>
+  <div class="actions">
+    <button class="btn primary" id="save">Datei speichern</button>
+    <button class="btn" id="copy">Kopieren</button>
+    <button class="btn" id="share" hidden>Teilen</button>
+  </div>
+</section>
+
+<footer id="env"></footer>
+
+<div id="note" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ---------- Farbmathematik: sRGB ⇄ Oklab ⇄ OKLCH, ohne Bibliothek ---------- */
+
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+
+function srgbToLin(c) {
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+function linToSrgb(c) {
+  return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+}
+
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(hex.trim());
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  return {
+    r: parseInt(h.slice(0, 2), 16) / 255,
+    g: parseInt(h.slice(2, 4), 16) / 255,
+    b: parseInt(h.slice(4, 6), 16) / 255
+  };
+}
+
+function rgbToHex({ r, g, b }) {
+  const h = v => Math.round(clamp01(v) * 255).toString(16).padStart(2, "0");
+  return "#" + (h(r) + h(g) + h(b)).toUpperCase();
+}
+
+function linRgbToOklab(r, g, b) {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return {
+    L: 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+    a: 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+    b: 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
+  };
+}
+
+function oklabToLinRgb(L, a, bb) {
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * bb;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * bb;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * bb;
+  const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+  return {
+    r: 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    g: -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    b: -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+  };
+}
+
+function hexToOklch(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  const { L, a, b } = linRgbToOklab(srgbToLin(rgb.r), srgbToLin(rgb.g), srgbToLin(rgb.b));
+  const C = Math.sqrt(a * a + b * b);
+  let H = Math.atan2(b, a) * 180 / Math.PI;
+  if (H < 0) H += 360;
+  return { L, C, H };
+}
+
+/* Rohes lineares sRGB für ein OKLCH-Tripel */
+function oklchToLinRgb(L, C, H) {
+  const rad = H * Math.PI / 180;
+  return oklabToLinRgb(L, C * Math.cos(rad), C * Math.sin(rad));
+}
+
+const EPS = 1e-4;
+const inRange = v => v >= -EPS && v <= 1 + EPS;
+
+function inSrgb(L, C, H) {
+  const { r, g, b } = oklchToLinRgb(L, C, H);
+  return inRange(r) && inRange(g) && inRange(b);
+}
+
+/* Display-P3-Prüfung: linear sRGB → XYZ(D65) → linear P3 */
+function inP3(L, C, H) {
+  const { r, g, b } = oklchToLinRgb(L, C, H);
+  const X = 0.4123907993 * r + 0.3575843394 * g + 0.1804807884 * b;
+  const Y = 0.2126390059 * r + 0.7151686788 * g + 0.0721923154 * b;
+  const Z = 0.0193308187 * r + 0.1191947798 * g + 0.9505321522 * b;
+  const pr = 2.4934969119 * X - 0.9313836179 * Y - 0.4027107845 * Z;
+  const pg = -0.8294889696 * X + 1.7626640603 * Y + 0.0236246858 * Z;
+  const pb = 0.0358458302 * X - 0.0761723893 * Y + 0.9568845240 * Z;
+  return inRange(pr) && inRange(pg) && inRange(pb);
+}
+
+/* Gamut-Mapping: Chroma per Bisektion senken, Lightness und Hue bleiben stehen.
+   Nie hart clippen — das würde den Farbton verziehen. */
+function clampChroma(L, C, H) {
+  if (inSrgb(L, C, H)) return C;
+  let lo = 0, hi = C;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (inSrgb(L, mid, H)) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+
+function oklchToHex(L, C, H) {
+  const lin = oklchToLinRgb(L, C, H);
+  return rgbToHex({
+    r: linToSrgb(clamp01(lin.r)),
+    g: linToSrgb(clamp01(lin.g)),
+    b: linToSrgb(clamp01(lin.b))
+  });
+}
+
+/* WCAG 2.2 Kontrastverhältnis */
+function relLum(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return 0.2126 * srgbToLin(r) + 0.7152 * srgbToLin(g) + 0.0722 * srgbToLin(b);
+}
+function contrast(hexA, hexB) {
+  const a = relLum(hexA), b = relLum(hexB);
+  const hi = Math.max(a, b), lo = Math.min(a, b);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/* ---------- Rampe ---------- */
+
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+const state = { hex: "#3B82F6", H: 0, lmax: 0.97, lmin: 0.21, cmax: 0.16, hshift: 0, fmt: "css" };
+
+function buildRamp() {
+  const n = STEPS.length;
+  return STEPS.map((step, i) => {
+    const t = i / (n - 1);
+    // Helligkeit: leicht gestauchte Kurve, damit die hellen Stufen enger beieinander liegen
+    const L = state.lmax - (state.lmax - state.lmin) * Math.pow(t, 1.15);
+    // Buntheit: Glocke mit Maximum in der Mitte, Enden bleiben bei 35 %
+    const C = state.cmax * (0.35 + 0.65 * Math.sin(Math.PI * Math.pow(t, 0.9)));
+    const H = (state.H + state.hshift * (t - 0.5) * 2 + 360) % 360;
+
+    const wanted = C;
+    const C2 = clampChroma(L, C, H);
+    const clipped = wanted - C2 > 0.002;
+    const p3only = clipped && inP3(L, wanted, H);
+
+    const hex = oklchToHex(L, C2, H);
+    return {
+      step, L, C: C2, H, hex, clipped, p3only,
+      cw: contrast(hex, "#FFFFFF"),
+      cb: contrast(hex, "#000000")
+    };
+  });
+}
+
+/* ---------- Ausgabe ---------- */
+
+const $ = id => document.getElementById(id);
+const fmtNum = (v, d = 2) => v.toFixed(d);
+const ok = (L, C, H) => `oklch(${(L * 100).toFixed(1)}% ${C.toFixed(4)} ${H.toFixed(1)})`;
+
+function renderRamp(ramp) {
+  const host = $("ramp");
+  host.textContent = "";
+  ramp.forEach(s => {
+    const onDark = s.cw >= s.cb;           // heller Text liest sich besser?
+    const ink = onDark ? "#FFFFFF" : "#000000";
+    const row = document.createElement("button");
+    row.className = "row";
+    row.type = "button";
+    row.style.background = s.hex;
+    row.style.color = ink;
+    row.setAttribute("aria-label", `Stufe ${s.step}, ${s.hex} kopieren`);
+
+    const flag = s.clipped ? `<span class="flag">${s.p3only ? "P3" : "eng"}</span>` : "";
+    row.innerHTML =
+      `<span class="step">${s.step}</span>` +
+      `<span class="hex">${s.hex}${flag}</span>` +
+      `<span class="cw ${s.cw < 3 ? "fail" : ""}">${fmtNum(s.cw)}</span>` +
+      `<span class="cb ${s.cb < 3 ? "fail" : ""}">${fmtNum(s.cb)}</span>`;
+
+    row.addEventListener("click", () => copyText(s.hex, `${s.hex} kopiert`));
+    host.appendChild(row);
+  });
+}
+
+function exportText(ramp) {
+  const p = ($("prefix").value.trim() || "brand").replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
+  if (state.fmt === "css") {
+    const lines = ramp.map(s => `  --${p}-${s.step}: ${ok(s.L, s.C, s.H)};`);
+    const fb = ramp.map(s => `  --${p}-${s.step}: ${s.hex};`);
+    return `:root {\n${fb.join("\n")}\n}\n\n@supports (color: oklch(0% 0 0)) {\n  :root {\n${lines.map(l => "  " + l).join("\n")}\n  }\n}\n`;
+  }
+  if (state.fmt === "tw") {
+    const body = ramp.map(s => `          ${s.step}: "${s.hex}",`).join("\n");
+    return `// tailwind.config.js\nmodule.exports = {\n  theme: {\n    extend: {\n      colors: {\n        ${p}: {\n${body}\n        },\n      },\n    },\n  },\n};\n`;
+  }
+  if (state.fmt === "json") {
+    const obj = { [p]: {} };
+    ramp.forEach(s => {
+      obj[p][s.step] = {
+        $type: "color",
+        $value: s.hex,
+        $extensions: { "de.spectroton.oklch": ok(s.L, s.C, s.H) }
+      };
+    });
+    return JSON.stringify(obj, null, 2) + "\n";
+  }
+  return ramp.map(s => s.hex).join("\n") + "\n";
+}
+
+function updateAurora() {
+  const h = state.H;
+  $("aurora1").style.background = oklchToHex(0.52, 0.13, h);
+  $("aurora2").style.background = oklchToHex(0.40, 0.13, (h + 150) % 360);
+  $("aurora3").style.background = oklchToHex(0.64, 0.10, (h + 30) % 360);
+}
+
+function render() {
+  const ramp = buildRamp();
+  renderRamp(ramp);
+  updateAurora();
+
+  const base = hexToOklch(state.hex);
+  const nearest = ramp.reduce((a, b) => Math.abs(b.L - base.L) < Math.abs(a.L - base.L) ? b : a);
+  $("baseOut").textContent = `${ok(base.L, base.C, base.H)} · liegt bei Stufe ${nearest.step}`;
+
+  $("lmaxV").textContent = Math.round(state.lmax * 100) + " %";
+  $("lminV").textContent = Math.round(state.lmin * 100) + " %";
+  $("cmaxV").textContent = state.cmax.toFixed(2);
+  $("hshiftV").textContent = (state.hshift > 0 ? "+" : "") + state.hshift + "°";
+
+  $("out").value = exportText(ramp);
+}
+
+/* ---------- Eingaben ---------- */
+
+function setBase(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  const norm = rgbToHex(rgb);
+  state.hex = norm;
+  const c = hexToOklch(norm);
+  state.H = c.H;
+  state.cmax = Math.max(0.02, Math.min(0.37, Math.round(c.C * 100) / 100));
+  $("cmax").value = Math.round(state.cmax * 100);
+  $("swatch").value = norm.toLowerCase();
+  return true;
+}
+
+$("swatch").addEventListener("input", e => {
+  setBase(e.target.value);
+  $("hexInput").value = state.hex;
+  render();
+  scheduleLookup();
+});
+
+$("hexInput").addEventListener("input", e => {
+  if (setBase(e.target.value)) { render(); scheduleLookup(); }
+});
+$("hexInput").addEventListener("blur", () => { $("hexInput").value = state.hex; });
+
+[["lmax", v => state.lmax = v / 100],
+ ["lmin", v => state.lmin = v / 100],
+ ["cmax", v => state.cmax = v / 100],
+ ["hshift", v => state.hshift = v]].forEach(([id, fn]) => {
+  $(id).addEventListener("input", e => { fn(Number(e.target.value)); render(); });
+});
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", "false"));
+    tab.setAttribute("aria-selected", "true");
+    state.fmt = tab.dataset.fmt;
+    const names = { css: "colors.css", tw: "tailwind.colors.js", json: "tokens.json", hex: "colors.txt" };
+    $("filename").value = names[state.fmt];
+    render();
+  });
+});
+
+/* ---------- Kopieren, Speichern, Teilen ---------- */
+
+let noteTimer;
+function note(msg) {
+  const el = $("note");
+  el.textContent = msg;
+  el.classList.add("on");
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => el.classList.remove("on"), 1600);
+}
+
+async function copyText(text, msg) {
+  try {
+    await navigator.clipboard.writeText(text);
+    note(msg);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); note(msg); }
+    catch { note("Kopieren blockiert — Text markieren und selbst kopieren"); }
+    ta.remove();
+  }
+}
+
+$("copy").addEventListener("click", () => copyText($("out").value, "Export kopiert"));
+
+const mime = () => state.fmt === "json" ? "application/json"
+  : state.fmt === "css" ? "text/css"
+  : state.fmt === "tw" ? "text/javascript" : "text/plain";
+
+$("save").addEventListener("click", async () => {
+  const name = $("filename").value.trim() || "colors.txt";
+  const text = $("out").value;
+  const blob = new Blob([text], { type: mime() + ";charset=utf-8" });
+
+  const canPick = "showSaveFilePicker" in window && (() => {
+    try { return window.self === window.top; } catch { return false; }
+  })();
+
+  if (canPick) {
+    try {
+      const handle = await window.showSaveFilePicker({ suggestedName: name });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      note("In " + handle.name + " geschrieben");
+      return;
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      // sonst: Fallback unten
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  note("Datei heruntergeladen");
+});
+
+/* Teilen nur zeigen, wenn das Gerät Dateien wirklich teilen kann */
+(function initShare() {
+  const probe = new File(["x"], "x.txt", { type: "text/plain" });
+  if (navigator.canShare && navigator.canShare({ files: [probe] })) {
+    const btn = $("share");
+    btn.hidden = false;
+    btn.addEventListener("click", async () => {
+      const name = $("filename").value.trim() || "colors.txt";
+      const file = new File([$("out").value], name, { type: mime() });
+      try { await navigator.share({ files: [file], title: name }); }
+      catch (e) { if (!e || e.name !== "AbortError") note("Teilen nicht möglich"); }
+    });
+  }
+})();
+
+/* Fußzeile: was diese Umgebung tatsächlich kann */
+(function envLine() {
+  const bits = [];
+  bits.push("showSaveFilePicker" in window ? "Direktes Speichern in einen Ordner: ja" : "Direktes Speichern in einen Ordner: nein, Datei landet in den Downloads");
+  bits.push(window.matchMedia("(color-gamut: p3)").matches ? "Bildschirm zeigt Display-P3" : "Bildschirm zeigt sRGB");
+  $("env").textContent = bits.join(". ") + ".";
+})();
+
+/* ---------- Farbnamen über api.color.pizza ---------- */
+
+const API = "https://api.color.pizza/v1";
+
+function listName() { return $("nameList").value; }
+
+function debounce(fn, ms) {
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+/* Wie heißt die aktuelle Basisfarbe? */
+async function lookupName() {
+  const out = $("nameOut");
+  const hex = state.hex.slice(1).toLowerCase();
+  out.textContent = "sucht Namen …";
+  try {
+    const r = await fetch(`${API}/?values=${hex}&list=${listName()}`);
+    const d = await r.json();
+    const c = d.colors && d.colors[0];
+    if (!c) { out.textContent = "Kein Name in dieser Liste."; return; }
+    const exact = c.hex.toLowerCase() === "#" + hex;
+    out.textContent = exact
+      ? `Heißt genau: ${c.name}`
+      : `Am nächsten: ${c.name} (${c.hex.toUpperCase()})`;
+  } catch {
+    out.textContent = "Offline — Namen brauchen einmal Netz. Bereits geladene bleiben gespeichert.";
+  }
+}
+
+/* Name eingetippt → passende Farben anbieten */
+async function searchName(q) {
+  const hits = $("hits");
+  if (!q.trim()) { hits.textContent = ""; return; }
+  try {
+    const r = await fetch(`${API}/names/?name=${encodeURIComponent(q)}&list=${listName()}&maxResults=8`);
+    const d = await r.json();
+    hits.textContent = "";
+    if (!d.colors || !d.colors.length) {
+      const p = document.createElement("span");
+      p.className = "readout";
+      p.textContent = "Nichts gefunden. Andere Liste versuchen.";
+      hits.appendChild(p);
+      return;
+    }
+    d.colors.forEach(c => {
+      const b = document.createElement("button");
+      b.className = "hit";
+      b.type = "button";
+      b.innerHTML = `<span class="dot" style="background:${c.hex}"></span><span>${c.name}</span><span class="code">${c.hex.toUpperCase()}</span>`;
+      b.addEventListener("click", () => {
+        setBase(c.hex);
+        $("hexInput").value = state.hex;
+        render();
+        note(c.name + " übernommen");
+        lookupName();
+      });
+      hits.appendChild(b);
+    });
+  } catch {
+    hits.textContent = "";
+    const p = document.createElement("span");
+    p.className = "readout";
+    p.textContent = "Offline — Namenssuche braucht Netz.";
+    hits.appendChild(p);
+  }
+}
+
+const scheduleLookup = debounce(lookupName, 450);
+
+$("nameInput").addEventListener("input", debounce(e => searchName(e.target.value), 320));
+$("nameList").addEventListener("change", () => {
+  lookupName();
+  searchName($("nameInput").value);
+});
+
+/* ---------- Als App installierbar machen ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+
+/* Start */
+setBase("#3B82F6");
+$("hexInput").value = state.hex;
+$("lmax").value = 97; $("lmin").value = 21; $("hshift").value = 0;
+render();
+lookupName();
+</script>
+</body>
+</html>

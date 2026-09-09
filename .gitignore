@@ -1,0 +1,15 @@
+# Betriebssystem
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+
+# falls später ein Build-Tool dazukommt
+node_modules/
+dist/
+*.log
+
+# Geheimnisse, niemals committen
+.env
+.env.local

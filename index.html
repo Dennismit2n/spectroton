@@ -233,9 +233,9 @@
   /* --- Rampe --- */
   .ramp-head {
     display: grid;
-    grid-template-columns: 46px 1fr 52px 52px;
-    gap: 8px;
-    padding: 0 12px 6px;
+    grid-template-columns: 46px 1fr 48px 48px 26px;
+    gap: 6px;
+    padding: 0 6px 6px 12px;
     font-size: 0.7rem;
     color: var(--ink-faint);
   }
@@ -246,11 +246,11 @@
 
   .row {
     display: grid;
-    grid-template-columns: 46px 1fr 52px 52px;
-    gap: 8px;
+    grid-template-columns: 46px 1fr 48px 48px 26px;
+    gap: 6px;
     align-items: center;
     min-height: var(--row-h);
-    padding: 0 12px;
+    padding: 0 6px 0 12px;
     font-variant-numeric: tabular-nums;
     font-size: 0.85rem;
     border: none;
@@ -259,6 +259,35 @@
     cursor: pointer;
     font-family: inherit;
   }
+  .row.locked { box-shadow: inset 3px 0 0 currentColor; }
+  .row .lock {
+    width: 26px; height: 34px;
+    background: none; border: none; padding: 0; margin: 0;
+    color: inherit; opacity: 0.45; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .row .lock[aria-pressed="true"] { opacity: 1; }
+
+  .mode-row { display: flex; gap: 6px; margin: 0 0 8px; }
+  .mode-row .tab { flex: 0 1 auto; }
+
+  /* --- Bibliothek --- */
+  #libList { margin-top: 12px; }
+  #libList:empty { margin-top: 0; }
+  .lib-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .lib-row:first-child { border-top: none; padding-top: 0; }
+  .lib-dots { display: flex; gap: 3px; }
+  .lib-dots span { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); }
+  .lib-name { font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-name small { display: block; color: var(--ink-faint); font-size: 0.72rem; }
+  .btn.mini { flex: none; min-height: 38px; padding: 0 12px; font-size: 0.8rem; }
 
   .row .step { font-weight: 600; opacity: 0.85; }
   .row .hex { letter-spacing: 0.02em; }
@@ -432,7 +461,11 @@
   <p class="readout" id="nameOut" style="margin:10px 0 0"></p>
 </section>
 
-<p class="readout" style="margin:0 0 10px">Tippen kopiert den HEX-Wert. Zahlen sind WCAG-Kontrastverhältnisse; ab 4.5 trägt Fließtext, ab 3.0 große Schrift und Bedienelemente.</p>
+<div class="mode-row" id="modeTabs" role="tablist">
+  <button class="tab" role="tab" data-mode="wcag" aria-selected="true">WCAG 2.2</button>
+  <button class="tab" role="tab" data-mode="apca" aria-selected="false">APCA (Lc)</button>
+</div>
+<p class="readout" id="contrastHint" style="margin:0 0 10px"></p>
 <div id="rampsHost"></div>
 
 <section class="card">
@@ -467,7 +500,7 @@
       <input type="text" id="filename" value="colors.css" spellcheck="false" autocomplete="off">
     </div>
   </div>
-  <div class="tabs" role="tablist">
+  <div class="tabs" id="fmtTabs" role="tablist">
     <button class="tab" role="tab" data-fmt="css" aria-selected="true">CSS</button>
     <button class="tab" role="tab" data-fmt="tw" aria-selected="false">Tailwind</button>
     <button class="tab" role="tab" data-fmt="json" aria-selected="false">Tokens</button>
@@ -478,8 +511,21 @@
     <button class="btn primary" id="save">Datei speichern</button>
     <button class="btn" id="copy">Kopieren</button>
     <button class="btn" id="share" hidden>Teilen</button>
+    <button class="btn" id="shareLink">Link kopieren</button>
   </div>
 </section>
+
+<section class="card">
+  <h2>Bibliothek</h2>
+  <div class="name-row">
+    <input type="text" id="libName" placeholder="Name der Palette" spellcheck="false" autocomplete="off" aria-label="Name für die gespeicherte Palette">
+    <button class="btn primary" id="libSave" type="button">Speichern</button>
+  </div>
+  <div id="libList"></div>
+  <p class="readout" style="margin:10px 0 0">Gespeicherte Paletten bleiben im Gerät — kein Konto, kein Server.</p>
+</section>
+
+<button class="btn" id="reset" type="button" style="width:100%;margin-bottom:14px">Alles zurücksetzen</button>
 
 <footer id="env"></footer>
 
@@ -607,13 +653,32 @@ function contrast(hexA, hexB) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/* APCA-W3 (SAPC-4g, Konstanten 0.1.9). Nicht normativ — Entwurf für WCAG 3.
+   Liefert Lc: positiv = dunkler Text auf hellem Grund, negativ = heller Text auf dunklem.
+   Anders als WCAG ist APCA nicht symmetrisch: Text- und Hintergrundrolle zählen. */
+function apcaY(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return 0.2126729 * Math.pow(r, 2.4) + 0.7151522 * Math.pow(g, 2.4) + 0.0721750 * Math.pow(b, 2.4);
+}
+function apca(textHex, bgHex) {
+  const soft = y => y < 0.022 ? y + Math.pow(0.022 - y, 1.414) : y;
+  const yt = soft(apcaY(textHex)), yb = soft(apcaY(bgHex));
+  if (Math.abs(yb - yt) < 0.0005) return 0;
+  const sapc = yb > yt
+    ? (Math.pow(yb, 0.56) - Math.pow(yt, 0.57)) * 1.14
+    : (Math.pow(yb, 0.65) - Math.pow(yt, 0.62)) * 1.14;
+  if (Math.abs(sapc) < 0.1) return 0;
+  return sapc > 0 ? (sapc - 0.027) * 100 : (sapc + 0.027) * 100;
+}
+
 /* ---------- Rampe ---------- */
 
 const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
 const state = {
-  colors: [{ hex: "#3B82F6", H: 0 }],
-  lmax: 0.97, lmin: 0.21, cmax: 0.16, hshift: 0, fmt: "css"
+  colors: [{ hex: "#3B82F6", H: 0, locks: {} }],
+  lmax: 0.97, lmin: 0.21, cmax: 0.16, hshift: 0, fmt: "css",
+  contrastMode: "wcag"
 };
 
 /* ---------- Akzentfarben: Harmonie-Vorschläge in OKLCH-Hue-Raum ---------- */
@@ -645,8 +710,9 @@ function nextHarmonyHue(kind) {
 }
 
 function addAccent(H) {
-  const hex = oklchToHex(0.62, Math.max(state.cmax, 0.08), H);
-  state.colors.push({ hex, H });
+  const C = clampChroma(0.62, Math.max(state.cmax, 0.08), H);
+  const hex = oklchToHex(0.62, C, H);
+  state.colors.push({ hex, H, locks: {} });
   render();
 }
 
@@ -676,15 +742,30 @@ function colorSlug(i, total) {
   return i === 0 ? "primary" : `accent-${i}`;
 }
 
-function buildRamp(baseH) {
+function buildRamp(color) {
   const n = STEPS.length;
+  const locks = color.locks || {};
+  const finish = s => {
+    s.cw = contrast(s.hex, "#FFFFFF");
+    s.cb = contrast(s.hex, "#000000");
+    s.aw = apca(s.hex, "#FFFFFF");
+    s.ab = apca(s.hex, "#000000");
+    return s;
+  };
   return STEPS.map((step, i) => {
+    /* Gesperrte Stufe: eingefrorener HEX-Wert, unabhängig von Reglern und Basisfarbe */
+    const frozen = locks[step];
+    if (frozen) {
+      const o = hexToOklch(frozen);
+      return finish({ step, L: o.L, C: o.C, H: o.H, hex: frozen, clipped: false, p3only: false, locked: true });
+    }
+
     const t = i / (n - 1);
     // Helligkeit: leicht gestauchte Kurve, damit die hellen Stufen enger beieinander liegen
     const L = state.lmax - (state.lmax - state.lmin) * Math.pow(t, 1.15);
     // Buntheit: Glocke mit Maximum in der Mitte, Enden bleiben bei 35 %
     const C = state.cmax * (0.35 + 0.65 * Math.sin(Math.PI * Math.pow(t, 0.9)));
-    const H = (baseH + state.hshift * (t - 0.5) * 2 + 360) % 360;
+    const H = (color.H + state.hshift * (t - 0.5) * 2 + 360) % 360;
 
     const wanted = C;
     const C2 = clampChroma(L, C, H);
@@ -692,11 +773,7 @@ function buildRamp(baseH) {
     const p3only = clipped && inP3(L, wanted, H);
 
     const hex = oklchToHex(L, C2, H);
-    return {
-      step, L, C: C2, H, hex, clipped, p3only,
-      cw: contrast(hex, "#FFFFFF"),
-      cb: contrast(hex, "#000000")
-    };
+    return finish({ step, L, C: C2, H, hex, clipped, p3only, locked: false });
   });
 }
 
@@ -705,35 +782,81 @@ function buildRamp(baseH) {
 const $ = id => document.getElementById(id);
 const fmtNum = (v, d = 2) => v.toFixed(d);
 const ok = (L, C, H) => `oklch(${(L * 100).toFixed(1)}% ${C.toFixed(4)} ${H.toFixed(1)})`;
+const FILE_NAMES = { css: "colors.css", tw: "tailwind.colors.js", json: "tokens.json", hex: "colors.txt" };
 
-function renderRamp(ramp, host) {
+const LOCK_OPEN   = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="true"><rect x="1" y="6" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const LOCK_CLOSED = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="true"><rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+
+function renderRamp(ramp, host, ci) {
   host.textContent = "";
+  const apcaMode = state.contrastMode === "apca";
   ramp.forEach(s => {
     const onDark = s.cw >= s.cb;           // heller Text liest sich besser?
     const ink = onDark ? "#FFFFFF" : "#000000";
-    const row = document.createElement("button");
-    row.className = "row";
-    row.type = "button";
+    const row = document.createElement("div");
+    row.className = "row" + (s.locked ? " locked" : "");
+    row.setAttribute("role", "button");
+    row.tabIndex = 0;
     row.style.background = s.hex;
     row.style.color = ink;
     row.setAttribute("aria-label", `Stufe ${s.step}, ${s.hex} kopieren`);
 
+    const v1 = apcaMode ? Math.round(Math.abs(s.aw)) : fmtNum(s.cw);
+    const v2 = apcaMode ? Math.round(Math.abs(s.ab)) : fmtNum(s.cb);
+    const f1 = apcaMode ? Math.abs(s.aw) < 30 : s.cw < 3;
+    const f2 = apcaMode ? Math.abs(s.ab) < 30 : s.cb < 3;
     const flag = s.clipped ? `<span class="flag">${s.p3only ? "P3" : "eng"}</span>` : "";
     row.innerHTML =
       `<span class="step">${s.step}</span>` +
       `<span class="hex">${s.hex}${flag}</span>` +
-      `<span class="cw ${s.cw < 3 ? "fail" : ""}">${fmtNum(s.cw)}</span>` +
-      `<span class="cb ${s.cb < 3 ? "fail" : ""}">${fmtNum(s.cb)}</span>`;
+      `<span class="cw ${f1 ? "fail" : ""}">${v1}</span>` +
+      `<span class="cb ${f2 ? "fail" : ""}">${v2}</span>` +
+      `<button type="button" class="lock" aria-pressed="${s.locked}" aria-label="Stufe ${s.step} ${s.locked ? "entsperren" : "sperren"}">${s.locked ? LOCK_CLOSED : LOCK_OPEN}</button>`;
 
-    row.addEventListener("click", () => copyText(s.hex, `${s.hex} kopiert`));
+    const copy = () => copyText(s.hex, `${s.hex} kopiert`);
+    row.addEventListener("click", copy);
+    row.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copy(); }
+    });
+    row.querySelector(".lock").addEventListener("click", e => {
+      e.stopPropagation();
+      toggleLock(ci, s.step);
+    });
     host.appendChild(row);
   });
 }
 
+function toggleLock(ci, step) {
+  const color = state.colors[ci];
+  color.locks = color.locks || {};
+  if (color.locks[step]) {
+    delete color.locks[step];
+    note(`Stufe ${step} freigegeben`);
+  } else {
+    const s = buildRamp(color).find(x => x.step === step);
+    color.locks[step] = s.hex;
+    note(`Stufe ${step} gesperrt`);
+  }
+  render();
+}
+
 function renderAccentChips() {
   const chips = $("accentChips");
+  const accents = state.colors.slice(1);
+
+  /* Gleiche Anzahl: nur Werte nachziehen, Elemente stehen lassen —
+     sonst verliert ein gerade offener Farbwähler sein Input-Element. */
+  if (chips.children.length === accents.length) {
+    accents.forEach((c, idx) => {
+      const input = chips.children[idx].querySelector("input");
+      const v = c.hex.toLowerCase();
+      if (input.value !== v) input.value = v;
+    });
+    return;
+  }
+
   chips.textContent = "";
-  state.colors.slice(1).forEach((c, idx) => {
+  accents.forEach((c, idx) => {
     const i = idx + 1;
     const wrap = document.createElement("div");
     wrap.className = "accent-chip";
@@ -755,9 +878,10 @@ function renderAccentChips() {
     wrap.appendChild(rm);
     chips.appendChild(wrap);
   });
+}
 
+function initHarmonyButtons() {
   const add = $("accentAdd");
-  add.textContent = "";
   Object.entries(HARMONIES).forEach(([key, h]) => {
     const b = document.createElement("button");
     b.type = "button";
@@ -775,16 +899,16 @@ function renderAllRamps() {
   host.textContent = "";
   const results = [];
   state.colors.forEach((c, i) => {
-    const ramp = buildRamp(c.H);
+    const ramp = buildRamp(c);
     results.push({ label: colorLabel(i), hex: c.hex, ramp });
 
     const section = document.createElement("section");
     section.className = "card";
     section.innerHTML =
       `<h2>${colorLabel(i)} · ${c.hex}</h2>` +
-      `<div class="ramp-head"><span>Stufe</span><span>Farbe</span><span>auf&nbsp;Weiß</span><span>auf&nbsp;Schwarz</span></div>` +
+      `<div class="ramp-head"><span>Stufe</span><span>Farbe</span><span>Weiß</span><span>Schwarz</span><span></span></div>` +
       `<div class="ramp"></div>`;
-    renderRamp(ramp, section.querySelector(".ramp"));
+    renderRamp(ramp, section.querySelector(".ramp"), i);
     host.appendChild(section);
   });
   return results;
@@ -818,19 +942,19 @@ function exportText(results) {
   }
 
   if (state.fmt === "json") {
-    const obj = {};
+    const group = {};
     results.forEach((r, i) => {
-      const slug = colorSlug(i, total) || p;
-      obj[slug] = {};
+      const slug = colorSlug(i, total);
+      const target = slug ? (group[slug] = {}) : group;
       r.ramp.forEach(s => {
-        obj[slug][s.step] = {
+        target[s.step] = {
           $type: "color",
           $value: s.hex,
           $extensions: { "de.spectroton.oklch": ok(s.L, s.C, s.H) }
         };
       });
     });
-    return JSON.stringify(obj, null, 2) + "\n";
+    return JSON.stringify({ [p]: group }, null, 2) + "\n";
   }
 
   if (total === 1) return results[0].ramp.map(s => s.hex).join("\n") + "\n";
@@ -843,9 +967,10 @@ function updateAurora() {
   const h0 = state.colors[0].H;
   const h1 = state.colors[1] ? state.colors[1].H : (h0 + 150) % 360;
   const h2 = state.colors[2] ? state.colors[2].H : (h0 + 30) % 360;
-  $("aurora1").style.background = oklchToHex(0.52, 0.13, h0);
-  $("aurora2").style.background = oklchToHex(0.40, 0.13, h1);
-  $("aurora3").style.background = oklchToHex(0.64, 0.10, h2);
+  const glow = (L, C, H) => oklchToHex(L, clampChroma(L, C, H), H);
+  $("aurora1").style.background = glow(0.52, 0.13, h0);
+  $("aurora2").style.background = glow(0.40, 0.13, h1);
+  $("aurora3").style.background = glow(0.64, 0.10, h2);
 }
 
 function render() {
@@ -864,6 +989,7 @@ function render() {
   $("hshiftV").textContent = (state.hshift > 0 ? "+" : "") + state.hshift + "°";
 
   $("out").value = exportText(results);
+  scheduleSave();
 }
 
 /* ---------- Eingaben ---------- */
@@ -893,20 +1019,37 @@ $("hexInput").addEventListener("input", e => {
 });
 $("hexInput").addEventListener("blur", () => { $("hexInput").value = state.colors[0].hex; });
 
+/* Slider feuern beim Ziehen viele Events pro Sekunde — auf einen Frame bündeln,
+   sonst wird bei mehreren Rampen jedes Mal der komplette DOM neu gebaut. */
+const raf = window.requestAnimationFrame ? cb => window.requestAnimationFrame(cb) : cb => setTimeout(cb, 16);
+let renderPending = false;
+function scheduleRender() {
+  if (renderPending) return;
+  renderPending = true;
+  raf(() => { renderPending = false; render(); });
+}
+
 [["lmax", v => state.lmax = v / 100],
  ["lmin", v => state.lmin = v / 100],
  ["cmax", v => state.cmax = v / 100],
  ["hshift", v => state.hshift = v]].forEach(([id, fn]) => {
-  $(id).addEventListener("input", e => { fn(Number(e.target.value)); render(); });
+  $(id).addEventListener("input", e => { fn(Number(e.target.value)); scheduleRender(); });
 });
 
-document.querySelectorAll(".tab").forEach(tab => {
+$("prefix").addEventListener("input", () => scheduleRender());
+
+document.querySelectorAll("#fmtTabs .tab").forEach(tab => {
   tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", "false"));
-    tab.setAttribute("aria-selected", "true");
     state.fmt = tab.dataset.fmt;
-    const names = { css: "colors.css", tw: "tailwind.colors.js", json: "tokens.json", hex: "colors.txt" };
-    $("filename").value = names[state.fmt];
+    syncControls();
+    render();
+  });
+});
+
+document.querySelectorAll("#modeTabs .tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    state.contrastMode = tab.dataset.mode;
+    syncControls();
     render();
   });
 });
@@ -1078,6 +1221,207 @@ $("nameList").addEventListener("change", () => {
   searchName($("nameInput").value);
 });
 
+/* ---------- Snapshot: ein Format für Merken, Bibliothek und Link ---------- */
+
+function snapshot() {
+  return {
+    colors: state.colors.map(c => ({
+      hex: c.hex,
+      H: Math.round(c.H * 100) / 100,
+      locks: c.locks && Object.keys(c.locks).length ? c.locks : undefined
+    })),
+    lmax: state.lmax, lmin: state.lmin, cmax: state.cmax, hshift: state.hshift,
+    prefix: $("prefix").value
+  };
+}
+
+/* Alles von außen wird geprüft und auf gültige Bereiche begrenzt — ein kaputter,
+   alter oder manipulierter Eintrag darf die App nie in einen unbrauchbaren Zustand bringen. */
+function applySnapshot(s) {
+  if (!s || !Array.isArray(s.colors) || !s.colors.length) return false;
+  const cols = [];
+  for (const c of s.colors) {
+    if (!c || !hexToRgb(String(c.hex || "")) || !Number.isFinite(c.H)) continue;
+    const locks = {};
+    if (c.locks && typeof c.locks === "object") {
+      for (const step of STEPS) {
+        const v = c.locks[step];
+        if (typeof v === "string" && hexToRgb(v)) locks[step] = rgbToHex(hexToRgb(v));
+      }
+    }
+    cols.push({ hex: rgbToHex(hexToRgb(c.hex)), H: ((c.H % 360) + 360) % 360, locks });
+  }
+  if (!cols.length) return false;
+  state.colors = cols;
+
+  const num = (v, lo, hi, d) => Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d;
+  state.lmax   = num(s.lmax,   0.85, 0.99, 0.97);
+  state.lmin   = num(s.lmin,   0.10, 0.45, 0.21);
+  state.cmax   = num(s.cmax,   0,    0.37, 0.16);
+  state.hshift = num(s.hshift, -30,  30,   0);
+  $("prefix").value = typeof s.prefix === "string" ? s.prefix.slice(0, 40) : "brand";
+  return true;
+}
+
+/* ---------- Merken zwischen Sitzungen ---------- */
+
+const STORE_KEY = "spectroton.state.v1";
+
+function saveState() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      ...snapshot(), fmt: state.fmt, contrastMode: state.contrastMode
+    }));
+  } catch { /* privater Modus oder voll — dann eben ohne Merken */ }
+}
+const scheduleSave = debounce(saveState, 300);
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (!applySnapshot(s)) return false;
+    if (Object.prototype.hasOwnProperty.call(FILE_NAMES, s.fmt)) state.fmt = s.fmt;
+    if (s.contrastMode === "apca" || s.contrastMode === "wcag") state.contrastMode = s.contrastMode;
+    return true;
+  } catch { return false; }
+}
+
+const HINTS = {
+  wcag: "Tippen kopiert den HEX-Wert, Schloss friert die Stufe ein. Zahlen: WCAG-2.2-Kontrast — ab 4.5 trägt Fließtext, ab 3.0 große Schrift und Bedienelemente.",
+  apca: "Lc-Werte nach APCA (Entwurf für WCAG 3, nicht normativ): ab 60 Fließtext, ab 45 große Schrift, ab 30 Bedienelemente. Verbindlich bleibt WCAG 2.2."
+};
+
+/* Bedienelemente auf den Zustand bringen — nach Wiederherstellen, Laden und Zurücksetzen */
+function syncControls() {
+  $("swatch").value = state.colors[0].hex.toLowerCase();
+  $("hexInput").value = state.colors[0].hex;
+  $("lmax").value = Math.round(state.lmax * 100);
+  $("lmin").value = Math.round(state.lmin * 100);
+  $("cmax").value = Math.round(state.cmax * 100);
+  $("hshift").value = state.hshift;
+  document.querySelectorAll("#fmtTabs .tab").forEach(t =>
+    t.setAttribute("aria-selected", t.dataset.fmt === state.fmt ? "true" : "false"));
+  document.querySelectorAll("#modeTabs .tab").forEach(t =>
+    t.setAttribute("aria-selected", t.dataset.mode === state.contrastMode ? "true" : "false"));
+  $("filename").value = FILE_NAMES[state.fmt];
+  $("contrastHint").textContent = HINTS[state.contrastMode];
+}
+
+$("reset").addEventListener("click", () => {
+  if (!confirm("Palette und Regler auf Standard zurücksetzen?")) return;
+  try { localStorage.removeItem(STORE_KEY); } catch {}
+  state.colors = [{ hex: "#3B82F6", H: 0, locks: {} }];
+  state.lmax = 0.97; state.lmin = 0.21; state.hshift = 0; state.fmt = "css";
+  $("prefix").value = "brand";
+  setBase("#3B82F6");
+  syncControls();
+  render();
+  lookupName();
+  note("Zurückgesetzt");
+});
+
+/* ---------- Bibliothek: mehrere Paletten im Gerät ---------- */
+
+const LIB_KEY = "spectroton.library.v1";
+
+function loadLibrary() {
+  try {
+    const lib = JSON.parse(localStorage.getItem(LIB_KEY) || "[]");
+    return Array.isArray(lib) ? lib.filter(e => e && typeof e.name === "string" && e.snap) : [];
+  } catch { return []; }
+}
+function saveLibrary(lib) {
+  try { localStorage.setItem(LIB_KEY, JSON.stringify(lib)); return true; }
+  catch { note("Speicher voll — konnte nicht sichern"); return false; }
+}
+
+function renderLibrary() {
+  const host = $("libList");
+  host.textContent = "";
+  loadLibrary().forEach(entry => {
+    const row = document.createElement("div");
+    row.className = "lib-row";
+
+    const dots = document.createElement("div");
+    dots.className = "lib-dots";
+    (entry.snap.colors || []).slice(0, 6).forEach(c => {
+      const d = document.createElement("span");
+      if (hexToRgb(String(c.hex || ""))) d.style.background = c.hex;
+      dots.appendChild(d);
+    });
+
+    const name = document.createElement("div");
+    name.className = "lib-name";
+    const when = entry.at ? new Date(entry.at) : null;
+    name.innerHTML = `${escapeHtml(entry.name)}<small>${when && !isNaN(when) ? when.toLocaleDateString("de-DE") : ""}</small>`;
+
+    const load = document.createElement("button");
+    load.type = "button"; load.className = "btn mini"; load.textContent = "Laden";
+    load.addEventListener("click", () => {
+      if (!applySnapshot(entry.snap)) { note("Eintrag ist beschädigt"); return; }
+      syncControls(); render(); lookupName();
+      note(`„${entry.name}" geladen`);
+    });
+
+    const del = document.createElement("button");
+    del.type = "button"; del.className = "btn mini"; del.textContent = "×";
+    del.setAttribute("aria-label", `„${entry.name}" löschen`);
+    del.addEventListener("click", () => {
+      if (!confirm(`„${entry.name}" aus der Bibliothek löschen?`)) return;
+      saveLibrary(loadLibrary().filter(e => e.id !== entry.id));
+      renderLibrary();
+    });
+
+    row.append(dots, name, load, del);
+    host.appendChild(row);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+$("libSave").addEventListener("click", () => {
+  const lib = loadLibrary();
+  const name = ($("libName").value.trim() || `Palette ${lib.length + 1}`).slice(0, 60);
+  lib.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, at: new Date().toISOString(), snap: snapshot() });
+  if (saveLibrary(lib)) {
+    $("libName").value = "";
+    renderLibrary();
+    note(`„${name}" gespeichert`);
+  }
+});
+$("libName").addEventListener("keydown", e => { if (e.key === "Enter") $("libSave").click(); });
+
+/* ---------- Palette als Link ---------- */
+
+const b64u = {
+  enc: str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
+  dec: s => decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))))
+};
+
+$("shareLink").addEventListener("click", async () => {
+  const url = location.origin + location.pathname + "#p=" + b64u.enc(JSON.stringify(snapshot()));
+  if (navigator.share) {
+    try { await navigator.share({ title: "Spectroton-Palette", url }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  copyText(url, "Link kopiert");
+});
+
+/* Beim Start: Link im Hash hat Vorrang vor dem gemerkten Zustand.
+   Danach wird der Hash entfernt, damit spätere Änderungen nicht mit einem alten Link verwechselt werden. */
+function importFromHash() {
+  const m = /^#p=([A-Za-z0-9_-]+)$/.exec(location.hash);
+  if (!m) return false;
+  try {
+    if (!applySnapshot(JSON.parse(b64u.dec(m[1])))) return false;
+    history.replaceState(null, "", location.pathname + location.search);
+    setTimeout(() => note("Palette aus Link geladen"), 400);
+    return true;
+  } catch { return false; }
+}
+
 /* ---------- Als App installierbar machen ---------- */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -1086,10 +1430,11 @@ if ("serviceWorker" in navigator) {
 }
 
 /* Start */
-setBase("#3B82F6");
-$("hexInput").value = state.colors[0].hex;
-$("lmax").value = 97; $("lmin").value = 21; $("hshift").value = 0;
+initHarmonyButtons();
+if (!importFromHash() && !loadState()) setBase("#3B82F6");
+syncControls();
 render();
+renderLibrary();
 lookupName();
 </script>
 </body>

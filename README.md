@@ -8,10 +8,14 @@ Eine Farbe rein, elf abgestimmte Stufen raus. Erzeugt perzeptuell gleichmäßige
 
 - Basisfarbe per Picker, HEX-Eingabe oder Namenssuche (deutsche, RAL- und internationale Farbnamen über [color.pizza](https://api.color.pizza))
 - Elf Stufen (50–950) in OKLCH, mit Reglern für Helligkeit, Buntheit und Farbdrift
-- WCAG-2.2-Kontrast je Stufe gegen Weiß und Schwarz
+- Akzentfarben per Farbharmonie dazu (komplementär, triadisch, analog, split-komplementär) — jede mit eigener Rampe, gleiche Feinjustage
+- WCAG-2.2-Kontrast je Stufe gegen Weiß und Schwarz, wahlweise APCA-Lc-Werte daneben (WCAG-3-Entwurf, nicht normativ)
+- Einzelne Stufen sperren — bleiben stehen, wenn Regler oder Basisfarbe sich ändern
 - Gamut-Mapping statt hartem Clipping — sRGB- und Display-P3-Warnung
 - Export als CSS Custom Properties, Tailwind, DTCG-Tokens oder reine HEX-Liste
-- Hintergrund folgt live der gewählten Basisfarbe
+- Hintergrund folgt live der gewählten Palette
+- Merkt sich Palette und Regler zwischen den Sitzungen; Bibliothek für beliebig viele benannte Paletten — alles im Gerät, kein Konto
+- Palette als Link teilen: der komplette Zustand steckt in der URL, kein Server dazwischen
 - Installierbar als PWA, läuft komplett offline
 
 ## Stack

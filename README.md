@@ -7,15 +7,15 @@ Eine Farbe rein, elf abgestimmte Stufen raus. Erzeugt perzeptuell gleichmäßige
 <table>
 <tr>
 <td align="center" width="33%">
-<img src="screenshots/uebersicht.jpg" alt="Basisfarbe, Akzentfarben, Farbname, Kontrastmodus"><br>
+<img src="uebersicht.jpg" alt="Basisfarbe, Akzentfarben, Farbname, Kontrastmodus"><br>
 <sub>Basisfarbe · Akzentfarben · Farbname</sub>
 </td>
 <td align="center" width="33%">
-<img src="screenshots/rampe.jpg" alt="Elf Stufen mit WCAG-Kontrast und Sperren"><br>
+<img src="rampe.jpg" alt="Elf Stufen mit WCAG-Kontrast und Sperren"><br>
 <sub>Stufen mit Kontrast und Sperren</sub>
 </td>
 <td align="center" width="33%">
-<img src="screenshots/export.jpg" alt="Export, Bibliothek, Zurücksetzen"><br>
+<img src="export.jpg" alt="Export, Bibliothek, Zurücksetzen"><br>
 <sub>Export · Bibliothek</sub>
 </td>
 </tr>

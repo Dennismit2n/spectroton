@@ -104,6 +104,7 @@
 
   .topbar {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
@@ -123,11 +124,27 @@
     margin: 0;
   }
 
-  #theme {
-    flex: none;
+  /* Der Titelblock nimmt, was die Waehler uebrig lassen. Ohne min-width: 0
+     kann ein Flex-Element nicht unter seine Inhaltsbreite schrumpfen. */
+  /* Der Titelblock fordert 12rem. Bleibt daneben kein Platz fuer die
+     Waehlergruppe, rutscht sie geschlossen in die naechste Zeile, statt
+     die Anschrift auf ein Dutzend Zeilen zu quetschen. */
+  .topbar > div:first-child { flex: 1 1 12rem; min-width: 0; }
+  .topbar-tools { display: flex; gap: 8px; flex: 0 0 auto; }
+
+  /* Beide Waehler in der Kopfzeile, gleich schmal gehalten. Ein <select>
+     waechst sonst auf seine laengste Option — "Helleres Dunkel" bzw.
+     "Nederlands" — und draengt die Anschrift auf ein Dutzend Zeilen.
+     Der Deckel kuerzt nur die geschlossene Ansicht; aufgeklappt steht
+     jede Option vollstaendig da. */
+  #theme,
+  #langSelect {
+    flex: 0 0 auto;
+    width: 7.25rem;
     min-height: 34px;
     padding: 6px 8px;
     font-size: 0.76rem;
+    text-overflow: ellipsis;
   }
 
   .card > summary {

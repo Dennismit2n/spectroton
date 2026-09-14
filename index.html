@@ -48,46 +48,48 @@
 
 <div class="topbar">
   <div>
-    <h1>Spectroton</h1>
-    <p class="sub">Eine Farbe rein, elf abgestimmte Stufen raus. Rechnet in OKLCH, prüft nach WCAG&nbsp;2.2, läuft offline.</p>
+    <h1 data-i18n="appName">Spectroton</h1>
+    <p class="sub" data-i18n="tagline">Eine Farbe rein, elf abgestimmte Stufen raus. Rechnet in OKLCH, prüft nach WCAG&nbsp;2.2, läuft offline.</p>
   </div>
-  <label for="theme" class="sr-only">Erscheinungsbild</label>
+  <label for="theme" class="sr-only" data-i18n="themeLabel">Erscheinungsbild</label>
   <select id="theme">
-    <option value="system">System</option>
-    <option value="light">Hell</option>
-    <option value="soft-dark">Helleres Dunkel</option>
-    <option value="dark">Dunkel</option>
+    <option value="system" data-i18n="themeSystem">System</option>
+    <option value="light" data-i18n="themeLight">Hell</option>
+    <option value="soft-dark" data-i18n="themeSoftDark">Helleres Dunkel</option>
+    <option value="dark" data-i18n="themeDark">Dunkel</option>
   </select>
+  <label for="langSelect" class="sr-only" data-i18n="langLabel">Sprache</label>
+  <select id="langSelect" data-i18n-aria="langLabel"></select>
 </div>
 
 <section class="card">
-  <h2>Basisfarbe</h2>
+  <h2 data-i18n="baseTitle">Basisfarbe</h2>
   <div class="base">
-    <input type="color" id="swatch" value="#3b82f6" aria-label="Basisfarbe wählen">
+    <input type="color" id="swatch" value="#3b82f6" data-i18n-aria="basePickAria" aria-label="Basisfarbe wählen">
     <div class="base-fields">
-      <input type="text" id="hexInput" value="#3B82F6" spellcheck="false" autocomplete="off" aria-label="Basisfarbe als HEX-Wert">
+      <input type="text" id="hexInput" value="#3B82F6" spellcheck="false" autocomplete="off" data-i18n-aria="baseHexAria" aria-label="Basisfarbe als HEX-Wert">
       <div class="readout" id="baseOut"></div>
     </div>
   </div>
 </section>
 
 <section class="card">
-  <h2>Akzentfarben</h2>
+  <h2 data-i18n="accentTitle">Akzentfarben</h2>
   <div class="accent-chips" id="accentChips"></div>
   <div class="harmony-row" id="accentAdd"></div>
-  <p class="readout" style="margin:10px 0 0">Optional — zusätzliche Farben, die zur Basis passen. Jede bekommt ihre eigene Rampe, gleiche Feinjustage.</p>
+  <p class="readout" style="margin:10px 0 0" data-i18n="accentNote">Optional — zusätzliche Farben, die zur Basis passen. Jede bekommt ihre eigene Rampe, gleiche Feinjustage.</p>
 </section>
 
 <section class="card">
-  <h2>Farbname</h2>
+  <h2 data-i18n="nameTitle">Farbname</h2>
   <div class="name-row">
-    <input type="text" id="nameInput" placeholder="Königsblau, Verkehrsrot …" spellcheck="false" autocomplete="off" aria-label="Farbe über den Namen suchen">
-    <select id="nameList" aria-label="Namensliste">
-      <option value="german">Deutsch</option>
-      <option value="mlmc_german">Deutsch +</option>
-      <option value="ral">RAL</option>
-      <option value="default">Alle 31 914</option>
-      <option value="wikipedia">Wikipedia</option>
+    <input type="text" id="nameInput" placeholder="Königsblau, Verkehrsrot …" data-i18n-ph="namePh" spellcheck="false" autocomplete="off" data-i18n-aria="nameAria" aria-label="Farbe über den Namen suchen">
+    <select id="nameList" data-i18n-aria="nameListAria" aria-label="Namensliste">
+      <option value="german" data-i18n="listGerman">Deutsch</option>
+      <option value="mlmc_german" data-i18n="listGermanPlus">Deutsch +</option>
+      <option value="ral" data-i18n="listRal">RAL</option>
+      <option value="default" data-i18n="listAll">Alle 31 914</option>
+      <option value="wikipedia" data-i18n="listWikipedia">Wikipedia</option>
     </select>
   </div>
   <div id="hits"></div>
@@ -102,34 +104,34 @@
 <div id="rampsHost"></div>
 
 <section class="card">
-  <h2>Feinjustage</h2>
+  <h2 data-i18n="tuneTitle">Feinjustage</h2>
   <div class="ctrl">
-    <label for="lmax">Hellste Stufe <b id="lmaxV"></b></label>
+    <label for="lmax"><span data-i18n="tuneLmax">Hellste Stufe</span> <b id="lmaxV"></b></label>
     <input type="range" id="lmax" min="85" max="99" step="1" value="97">
   </div>
   <div class="ctrl">
-    <label for="lmin">Dunkelste Stufe <b id="lminV"></b></label>
+    <label for="lmin"><span data-i18n="tuneLmin">Dunkelste Stufe</span> <b id="lminV"></b></label>
     <input type="range" id="lmin" min="10" max="45" step="1" value="21">
   </div>
   <div class="ctrl">
-    <label for="cmax">Buntheit <b id="cmaxV"></b></label>
+    <label for="cmax"><span data-i18n="tuneCmax">Buntheit</span> <b id="cmaxV"></b></label>
     <input type="range" id="cmax" min="0" max="37" step="1" value="16">
   </div>
   <div class="ctrl">
-    <label for="hshift">Farbdrift über die Rampe <b id="hshiftV"></b></label>
+    <label for="hshift"><span data-i18n="tuneHshift">Farbdrift über die Rampe</span> <b id="hshiftV"></b></label>
     <input type="range" id="hshift" min="-30" max="30" step="1" value="0">
   </div>
 </section>
 
 <section class="card">
-  <h2>Export</h2>
+  <h2 data-i18n="exportTitle">Export</h2>
   <div class="prefix-row">
     <div class="field">
-      <label for="prefix">Name</label>
+      <label for="prefix" data-i18n="exportPrefixLabel">Name</label>
       <input type="text" id="prefix" value="brand" spellcheck="false" autocomplete="off">
     </div>
     <div class="field">
-      <label for="filename">Datei</label>
+      <label for="filename" data-i18n="exportFileLabel">Datei</label>
       <input type="text" id="filename" value="colors.css" spellcheck="false" autocomplete="off">
     </div>
   </div>
@@ -139,31 +141,32 @@
     <button class="tab" role="tab" data-fmt="json" aria-selected="false">Tokens</button>
     <button class="tab" role="tab" data-fmt="hex" aria-selected="false">HEX</button>
   </div>
-  <textarea id="out" readonly spellcheck="false" aria-label="Exportierter Code"></textarea>
+  <textarea id="out" readonly spellcheck="false" data-i18n-aria="exportAria" aria-label="Exportierter Code"></textarea>
   <div class="actions">
-    <button class="btn primary" id="save">Datei speichern</button>
-    <button class="btn" id="copy">Kopieren</button>
-    <button class="btn" id="share" hidden>Teilen</button>
-    <button class="btn" id="shareLink">Link kopieren</button>
+    <button class="btn primary" id="save" data-i18n="btnSave">Datei speichern</button>
+    <button class="btn" id="copy" data-i18n="btnCopy">Kopieren</button>
+    <button class="btn" id="share" hidden data-i18n="btnShare">Teilen</button>
+    <button class="btn" id="shareLink" data-i18n="btnShareLink">Link kopieren</button>
   </div>
 </section>
 
 <details class="card">
-  <summary>Bibliothek</summary>
+  <summary data-i18n="libTitle">Bibliothek</summary>
   <div class="name-row">
-    <input type="text" id="libName" placeholder="Name der Palette" spellcheck="false" autocomplete="off" aria-label="Name für die gespeicherte Palette">
-    <button class="btn primary" id="libSave" type="button">Speichern</button>
+    <input type="text" id="libName" placeholder="Name der Palette" data-i18n-ph="libNamePh" spellcheck="false" autocomplete="off" data-i18n-aria="libNameAria" aria-label="Name für die gespeicherte Palette">
+    <button class="btn primary" id="libSave" type="button" data-i18n="btnLibSave">Speichern</button>
   </div>
   <div id="libList"></div>
-  <p class="readout" style="margin:10px 0 0">Gespeicherte Paletten bleiben im Gerät — kein Konto, kein Server.</p>
+  <p class="readout" style="margin:10px 0 0" data-i18n="libNote">Gespeicherte Paletten bleiben im Gerät — kein Konto, kein Server.</p>
 </details>
 
-<button class="btn" id="reset" type="button" style="width:100%;margin-bottom:14px">Alles zurücksetzen</button>
+<button class="btn" id="reset" type="button" style="width:100%;margin-bottom:14px" data-i18n="btnReset">Alles zurücksetzen</button>
 
 <footer id="env"></footer>
 
 <div id="note" role="status" aria-live="polite"></div>
 
+<script src="./js/i18n.js"></script>
 <script src="./js/app.js"></script>
 </body>
 </html>

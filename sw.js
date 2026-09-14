@@ -5,7 +5,7 @@ const SHELL = VERSION + "-shell";
 const NAMES = VERSION + "-names";
 
 const FILES = ["./", "./index.html", "./manifest.webmanifest",
-               "./css/style.css", "./js/app.js"];
+               "./css/style.css", "./js/i18n.js", "./js/app.js"];
 
 self.addEventListener("install", e => {
   e.waitUntil(

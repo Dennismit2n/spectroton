@@ -153,10 +153,10 @@ const state = {
 /* ---------- Akzentfarben: Harmonie-Vorschläge in OKLCH-Hue-Raum ---------- */
 
 const HARMONIES = {
-  comp:   { label: "Komplementär", offsets: [180] },
-  triad:  { label: "Triadisch",    offsets: [120, 240] },
-  analog: { label: "Analog",       offsets: [30, -30] },
-  split:  { label: "Split-Komp.",  offsets: [150, 210] }
+  comp:   { labelKey: "harmComp",   offsets: [180] },
+  triad:  { labelKey: "harmTriad",  offsets: [120, 240] },
+  analog: { labelKey: "harmAnalog", offsets: [30, -30] },
+  split:  { labelKey: "harmSplit",  offsets: [150, 210] }
 };
 
 function angleDist(a, b) {
@@ -201,7 +201,7 @@ function editAccent(i, hex) {
 }
 
 function colorLabel(i) {
-  return i === 0 ? "Primär" : `Akzent ${i}`;
+  return i === 0 ? i18n.t("labelPrimary") : i18n.fmt("labelAccent", { n: i });
 }
 
 /* Export-Namenssegment: bei nur einer Farbe bleibt der Name unverändert wie bisher,
@@ -268,7 +268,7 @@ function renderRamp(ramp, host, ci) {
     row.tabIndex = 0;
     row.style.background = s.hex;
     row.style.color = ink;
-    row.setAttribute("aria-label", `Stufe ${s.step}, ${s.hex} kopieren`);
+    row.setAttribute("aria-label", i18n.fmt("ariaStepCopy", { step: s.step, hex: s.hex }));
 
     const v1 = apcaMode ? Math.round(Math.abs(s.aw)) : fmtNum(s.cw);
     const v2 = apcaMode ? Math.round(Math.abs(s.ab)) : fmtNum(s.cb);
@@ -280,9 +280,9 @@ function renderRamp(ramp, host, ci) {
       `<span class="hex">${s.hex}${flag}</span>` +
       `<span class="cw ${f1 ? "fail" : ""}">${v1}</span>` +
       `<span class="cb ${f2 ? "fail" : ""}">${v2}</span>` +
-      `<button type="button" class="lock" aria-pressed="${s.locked}" aria-label="Stufe ${s.step} ${s.locked ? "entsperren" : "sperren"}">${s.locked ? LOCK_CLOSED : LOCK_OPEN}</button>`;
+      `<button type="button" class="lock" aria-pressed="${s.locked}" aria-label="${i18n.fmt(s.locked ? "ariaStepUnlock" : "ariaStepLock", { step: s.step })}">${s.locked ? LOCK_CLOSED : LOCK_OPEN}</button>`;
 
-    const copy = () => copyText(s.hex, `${s.hex} kopiert`);
+    const copy = () => copyText(s.hex, i18n.fmt("noteHexCopied", { hex: s.hex }));
     row.addEventListener("click", copy);
     row.addEventListener("keydown", e => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copy(); }
@@ -300,11 +300,11 @@ function toggleLock(ci, step) {
   color.locks = color.locks || {};
   if (color.locks[step]) {
     delete color.locks[step];
-    note(`Stufe ${step} freigegeben`);
+    note(i18n.fmt("noteStepFree", { step: step }));
   } else {
     const s = buildRamp(color).find(x => x.step === step);
     color.locks[step] = s.hex;
-    note(`Stufe ${step} gesperrt`);
+    note(i18n.fmt("noteStepLock", { step: step }));
   }
   render();
 }
@@ -333,14 +333,14 @@ function renderAccentChips() {
     const input = document.createElement("input");
     input.type = "color";
     input.value = c.hex.toLowerCase();
-    input.setAttribute("aria-label", `Akzent ${i}, Farbe ändern`);
+    input.setAttribute("aria-label", i18n.fmt("ariaAccentColor", { n: i }));
     input.addEventListener("input", e => editAccent(i, e.target.value));
 
     const rm = document.createElement("button");
     rm.type = "button";
     rm.className = "rm";
     rm.textContent = "×";
-    rm.setAttribute("aria-label", `Akzent ${i} entfernen`);
+    rm.setAttribute("aria-label", i18n.fmt("ariaAccentRemove", { n: i }));
     rm.addEventListener("click", () => removeAccent(i));
 
     wrap.appendChild(input);
@@ -351,11 +351,14 @@ function renderAccentChips() {
 
 function initHarmonyButtons() {
   const add = $("accentAdd");
+  /* Leeren, bevor neu gebaut wird: beim Sprachwechsel laeuft das hier ein
+     zweites Mal, sonst stuenden die alten Knoepfe daneben. */
+  add.textContent = "";
   Object.entries(HARMONIES).forEach(([key, h]) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "harmony-btn";
-    b.textContent = h.label;
+    b.textContent = i18n.t(h.labelKey);
     b.addEventListener("click", () => addAccent(nextHarmonyHue(key)));
     add.appendChild(b);
   });
@@ -375,7 +378,7 @@ function renderAllRamps() {
     section.className = "card";
     section.innerHTML =
       `<h2>${colorLabel(i)} · ${c.hex}</h2>` +
-      `<div class="ramp-head"><span>Stufe</span><span>Farbe</span><span>Weiß</span><span>Schwarz</span><span></span></div>` +
+      `<div class="ramp-head"><span>${i18n.t("rampStep")}</span><span>${i18n.t("rampColor")}</span><span>${i18n.t("rampWhite")}</span><span>${i18n.t("rampBlack")}</span><span></span></div>` +
       `<div class="ramp"></div>`;
     renderRamp(ramp, section.querySelector(".ramp"), i);
     host.appendChild(section);
@@ -450,7 +453,7 @@ function render() {
   const primary = state.colors[0];
   const base = hexToOklch(primary.hex);
   const nearest = results[0].ramp.reduce((a, b) => Math.abs(b.L - base.L) < Math.abs(a.L - base.L) ? b : a);
-  $("baseOut").textContent = `${ok(base.L, base.C, base.H)} · liegt bei Stufe ${nearest.step}`;
+  $("baseOut").textContent = i18n.fmt("baseReadout", { oklch: ok(base.L, base.C, base.H), step: nearest.step });
 
   $("lmaxV").textContent = Math.round(state.lmax * 100) + " %";
   $("lminV").textContent = Math.round(state.lmin * 100) + " %";
@@ -546,12 +549,12 @@ async function copyText(text, msg) {
     document.body.appendChild(ta);
     ta.select();
     try { document.execCommand("copy"); note(msg); }
-    catch { note("Kopieren blockiert — Text markieren und selbst kopieren"); }
+    catch { note(i18n.t("noteCopyBlocked")); }
     ta.remove();
   }
 }
 
-$("copy").addEventListener("click", () => copyText($("out").value, "Export kopiert"));
+$("copy").addEventListener("click", () => copyText($("out").value, i18n.t("noteExportCopied")));
 
 const mime = () => state.fmt === "json" ? "application/json"
   : state.fmt === "css" ? "text/css"
@@ -572,7 +575,7 @@ $("save").addEventListener("click", async () => {
       const w = await handle.createWritable();
       await w.write(blob);
       await w.close();
-      note("In " + handle.name + " geschrieben");
+      note(i18n.fmt("noteWrittenTo", { file: handle.name }));
       return;
     } catch (err) {
       if (err && err.name === "AbortError") return;
@@ -588,7 +591,7 @@ $("save").addEventListener("click", async () => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
-  note("Datei heruntergeladen");
+  note(i18n.t("noteDownloaded"));
 });
 
 /* Teilen nur zeigen, wenn das Gerät Dateien wirklich teilen kann */
@@ -601,18 +604,20 @@ $("save").addEventListener("click", async () => {
       const name = $("filename").value.trim() || "colors.txt";
       const file = new File([$("out").value], name, { type: mime() });
       try { await navigator.share({ files: [file], title: name }); }
-      catch (e) { if (!e || e.name !== "AbortError") note("Teilen nicht möglich"); }
+      catch (e) { if (!e || e.name !== "AbortError") note(i18n.t("noteShareFailed")); }
     });
   }
 })();
 
-/* Fußzeile: was diese Umgebung tatsächlich kann */
-(function envLine() {
+/* Fußzeile: was diese Umgebung tatsächlich kann.
+   Benannt statt sofort ausgefuehrt, damit der Sprachwechsel sie erneut aufrufen kann. */
+function envLine() {
   const bits = [];
-  bits.push("showSaveFilePicker" in window ? "Direktes Speichern in einen Ordner: ja" : "Direktes Speichern in einen Ordner: nein, Datei landet in den Downloads");
-  bits.push(window.matchMedia("(color-gamut: p3)").matches ? "Bildschirm zeigt Display-P3" : "Bildschirm zeigt sRGB");
+  bits.push(i18n.t("showSaveFilePicker" in window ? "envSaveYes" : "envSaveNo"));
+  bits.push(i18n.t(window.matchMedia("(color-gamut: p3)").matches ? "envGamutP3" : "envGamutSrgb"));
   $("env").textContent = bits.join(". ") + ".";
-})();
+}
+envLine();
 
 /* ---------- Farbnamen über api.color.pizza ---------- */
 
@@ -629,18 +634,18 @@ function debounce(fn, ms) {
 async function lookupName() {
   const out = $("nameOut");
   const hex = state.colors[0].hex.slice(1).toLowerCase();
-  out.textContent = "sucht Namen …";
+  out.textContent = i18n.t("nameSearching");
   try {
     const r = await fetch(`${API}/?values=${hex}&list=${listName()}`);
     const d = await r.json();
     const c = d.colors && d.colors[0];
-    if (!c) { out.textContent = "Kein Name in dieser Liste."; return; }
+    if (!c) { out.textContent = i18n.t("nameNone"); return; }
     const exact = c.hex.toLowerCase() === "#" + hex;
     out.textContent = exact
-      ? `Heißt genau: ${c.name}`
-      : `Am nächsten: ${c.name} (${c.hex.toUpperCase()})`;
+      ? i18n.fmt("nameExact", { name: c.name })
+      : i18n.fmt("nameNearest", { name: c.name, hex: c.hex.toUpperCase() });
   } catch {
-    out.textContent = "Offline — Namen brauchen einmal Netz. Bereits geladene bleiben gespeichert.";
+    out.textContent = i18n.t("nameOffline");
   }
 }
 
@@ -655,7 +660,7 @@ async function searchName(q) {
     if (!d.colors || !d.colors.length) {
       const p = document.createElement("span");
       p.className = "readout";
-      p.textContent = "Nichts gefunden. Andere Liste versuchen.";
+      p.textContent = i18n.t("nameNothingFound");
       hits.appendChild(p);
       return;
     }
@@ -668,7 +673,7 @@ async function searchName(q) {
         setBase(c.hex);
         $("hexInput").value = state.colors[0].hex;
         render();
-        note(c.name + " übernommen");
+        note(i18n.fmt("noteNameTaken", { name: c.name }));
         lookupName();
       });
       hits.appendChild(b);
@@ -677,7 +682,7 @@ async function searchName(q) {
     hits.textContent = "";
     const p = document.createElement("span");
     p.className = "readout";
-    p.textContent = "Offline — Namenssuche braucht Netz.";
+    p.textContent = i18n.t("nameSearchOffline");
     hits.appendChild(p);
   }
 }
@@ -756,8 +761,8 @@ function loadState() {
 }
 
 const HINTS = {
-  wcag: "Tippen kopiert den HEX-Wert, Schloss friert die Stufe ein. Zahlen: WCAG-2.2-Kontrast — ab 4.5 trägt Fließtext, ab 3.0 große Schrift und Bedienelemente.",
-  apca: "Lc-Werte nach APCA (Entwurf für WCAG 3, nicht normativ): ab 60 Fließtext, ab 45 große Schrift, ab 30 Bedienelemente. Verbindlich bleibt WCAG 2.2."
+  wcag: "hintWcag",
+  apca: "hintApca"
 };
 
 /* Bedienelemente auf den Zustand bringen — nach Wiederherstellen, Laden und Zurücksetzen */
@@ -773,11 +778,11 @@ function syncControls() {
   document.querySelectorAll("#modeTabs .tab").forEach(t =>
     t.setAttribute("aria-selected", t.dataset.mode === state.contrastMode ? "true" : "false"));
   $("filename").value = FILE_NAMES[state.fmt];
-  $("contrastHint").textContent = HINTS[state.contrastMode];
+  $("contrastHint").textContent = i18n.t(HINTS[state.contrastMode]);
 }
 
 $("reset").addEventListener("click", () => {
-  if (!confirm("Palette und Regler auf Standard zurücksetzen?")) return;
+  if (!confirm(i18n.t("confirmReset"))) return;
   try { localStorage.removeItem(STORE_KEY); } catch {}
   state.colors = [{ hex: "#3B82F6", H: 0, locks: {} }];
   state.lmax = 0.97; state.lmin = 0.21; state.hshift = 0; state.fmt = "css";
@@ -786,7 +791,7 @@ $("reset").addEventListener("click", () => {
   syncControls();
   render();
   lookupName();
-  note("Zurückgesetzt");
+  note(i18n.t("noteReset"));
 });
 
 /* ---------- Bibliothek: mehrere Paletten im Gerät ---------- */
@@ -801,7 +806,7 @@ function loadLibrary() {
 }
 function saveLibrary(lib) {
   try { localStorage.setItem(LIB_KEY, JSON.stringify(lib)); return true; }
-  catch { note("Speicher voll — konnte nicht sichern"); return false; }
+  catch { note(i18n.t("noteStorageFull")); return false; }
 }
 
 function renderLibrary() {
@@ -822,21 +827,21 @@ function renderLibrary() {
     const name = document.createElement("div");
     name.className = "lib-name";
     const when = entry.at ? new Date(entry.at) : null;
-    name.innerHTML = `${escapeHtml(entry.name)}<small>${when && !isNaN(when) ? when.toLocaleDateString("de-DE") : ""}</small>`;
+    name.innerHTML = `${escapeHtml(entry.name)}<small>${when && !isNaN(when) ? when.toLocaleDateString(i18n.lang) : ""}</small>`;
 
     const load = document.createElement("button");
-    load.type = "button"; load.className = "btn mini"; load.textContent = "Laden";
+    load.type = "button"; load.className = "btn mini"; load.textContent = i18n.t("btnLoad");
     load.addEventListener("click", () => {
-      if (!applySnapshot(entry.snap)) { note("Eintrag ist beschädigt"); return; }
+      if (!applySnapshot(entry.snap)) { note(i18n.t("noteEntryBroken")); return; }
       syncControls(); render(); lookupName();
-      note(`„${entry.name}" geladen`);
+      note(i18n.fmt("noteLoaded", { name: entry.name }));
     });
 
     const del = document.createElement("button");
     del.type = "button"; del.className = "btn mini"; del.textContent = "×";
-    del.setAttribute("aria-label", `„${entry.name}" löschen`);
+    del.setAttribute("aria-label", i18n.fmt("ariaDelete", { name: entry.name }));
     del.addEventListener("click", () => {
-      if (!confirm(`„${entry.name}" aus der Bibliothek löschen?`)) return;
+      if (!confirm(i18n.fmt("confirmDelete", { name: entry.name }))) return;
       saveLibrary(loadLibrary().filter(e => e.id !== entry.id));
       renderLibrary();
     });
@@ -852,12 +857,12 @@ function escapeHtml(s) {
 
 $("libSave").addEventListener("click", () => {
   const lib = loadLibrary();
-  const name = ($("libName").value.trim() || `Palette ${lib.length + 1}`).slice(0, 60);
+  const name = ($("libName").value.trim() || i18n.fmt("libDefaultName", { n: lib.length + 1 })).slice(0, 60);
   lib.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, at: new Date().toISOString(), snap: snapshot() });
   if (saveLibrary(lib)) {
     $("libName").value = "";
     renderLibrary();
-    note(`„${name}" gespeichert`);
+    note(i18n.fmt("noteSaved", { name: name }));
   }
 });
 $("libName").addEventListener("keydown", e => { if (e.key === "Enter") $("libSave").click(); });
@@ -872,10 +877,10 @@ const b64u = {
 $("shareLink").addEventListener("click", async () => {
   const url = location.origin + location.pathname + "#p=" + b64u.enc(JSON.stringify(snapshot()));
   if (navigator.share) {
-    try { await navigator.share({ title: "Spectroton-Palette", url }); return; }
+    try { await navigator.share({ title: i18n.t("shareTitle"), url }); return; }
     catch (e) { if (e && e.name === "AbortError") return; }
   }
-  copyText(url, "Link kopiert");
+  copyText(url, i18n.t("noteLinkCopied"));
 });
 
 /* Beim Start: Link im Hash hat Vorrang vor dem gemerkten Zustand.
@@ -886,7 +891,7 @@ function importFromHash() {
   try {
     if (!applySnapshot(JSON.parse(b64u.dec(m[1])))) return false;
     history.replaceState(null, "", location.pathname + location.search);
-    setTimeout(() => note("Palette aus Link geladen"), 400);
+    setTimeout(() => note(i18n.t("noteFromLink")), 400);
     return true;
   } catch { return false; }
 }
@@ -937,8 +942,36 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+/* ---------- Sprache ----------
+   Muss vor dem ersten Rendern laufen: Rampenkoepfe und Harmonie-Knoepfe
+   entstehen zur Laufzeit aus der Tabelle, nicht aus dem Markup. */
+function initLanguage() {
+  const sel = $("langSelect");
+  Object.keys(I18N).forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = I18N[code]._name;
+    sel.appendChild(opt);
+  });
+  const lang = i18n.detect();
+  sel.value = lang;
+  i18n.apply(lang);
+  sel.addEventListener("change", () => {
+    i18n.apply(sel.value);
+    /* Was im Markup steht, hat apply() erledigt. Alles zur Laufzeit
+       Gebaute muss neu gezeichnet werden. */
+    initHarmonyButtons();
+    syncControls();
+    render();
+    renderLibrary();
+    lookupName();
+    envLine();
+  });
+}
+
 /* Start */
 initTheme();
+initLanguage();
 initHarmonyButtons();
 if (!importFromHash() && !loadState()) setBase("#3B82F6");
 syncControls();

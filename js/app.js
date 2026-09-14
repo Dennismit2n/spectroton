@@ -615,7 +615,9 @@ function envLine() {
   const bits = [];
   bits.push(i18n.t("showSaveFilePicker" in window ? "envSaveYes" : "envSaveNo"));
   bits.push(i18n.t(window.matchMedia("(color-gamut: p3)").matches ? "envGamutP3" : "envGamutSrgb"));
-  $("env").textContent = bits.join(". ") + ".";
+  /* Die Zeichensetzung steckt im Rahmen, nicht im Code: Japanisch und
+     Chinesisch setzen einen anderen Schlusspunkt als die uebrigen. */
+  $("env").textContent = i18n.fmt("envLine", { save: bits[0], gamut: bits[1] });
 }
 envLine();
 

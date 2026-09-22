@@ -46,6 +46,10 @@ Eine Farbe rein, elf abgestimmte Stufen raus. Erzeugt perzeptuell gleichmäßige
 
 Eine einzige HTML-Datei, keine Abhängigkeiten, keine Build-Kette. Die Farbmathematik (sRGB ⇄ Oklab ⇄ OKLCH, WCAG-Kontrast, Gamut-Mapping) ist selbst implementiert.
 
+## Zählung
+
+Besuche werden anonym über [GoatCounter](https://www.goatcounter.com/) gezählt — ohne Cookies, ohne Kennung, im Footer offengelegt. Das Zählskript liegt als Kopie in `js/vendor/count.js`; nach draußen geht nur der Zählaufruf. Der geteilte Farbzustand steht im Anker der Adresse (`#p=…`) und wird dabei nie mitgesendet.
+
 ## Lizenz
 
-MIT
+MIT — mit einer Ausnahme: `js/vendor/count.js` ist das Zählskript von GoatCounter und steht unter der ISC-Lizenz (im Dateikopf genannt).

@@ -517,6 +517,7 @@
   #note.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   footer { color: var(--ink-faint); font-size: 0.74rem; line-height: 1.6; margin-top: 4px; }
+  footer p { margin: 0; }
 
   @media (prefers-reduced-motion: reduce) {
     #note { transition: none; }

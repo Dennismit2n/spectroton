@@ -1,11 +1,12 @@
 /* Spectroton — Service Worker
    Version bei jeder Änderung hochzählen, sonst bleibt die alte App im Cache. */
-const VERSION = "spectroton-v6";
+const VERSION = "spectroton-v7";
 const SHELL = VERSION + "-shell";
 const NAMES = VERSION + "-names";
 
 const FILES = ["./", "./index.html", "./manifest.webmanifest",
-               "./css/style.css", "./js/i18n.js", "./js/app.js"];
+               "./css/style.css", "./js/i18n.js", "./js/app.js",
+               "./js/vendor/count.js"];
 
 self.addEventListener("install", e => {
   e.waitUntil(

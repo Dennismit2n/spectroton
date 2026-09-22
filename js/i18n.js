@@ -158,6 +158,9 @@ var I18N = {
     envSaveNo: 'Direktes Speichern in einen Ordner: nein, Datei landet in den Downloads',
     envGamutP3: 'Bildschirm zeigt Display-P3',
     envGamutSrgb: 'Bildschirm zeigt sRGB',
+    /* Offenlegung der Besucherzählung, wortgleich mit den übrigen Werkzeugen
+       der Werkstatt (bigday, wifi-qr …). */
+    footerAnalytics: 'Anonyme Besucherzählung (GoatCounter, ohne Cookies).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -263,6 +266,7 @@ var I18N = {
     envSaveNo: 'Saving straight into a folder: no, the file lands in Downloads',
     envGamutP3: 'Screen shows Display-P3',
     envGamutSrgb: 'Screen shows sRGB',
+    footerAnalytics: 'Anonymous visitor stats (GoatCounter, no cookies).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -368,6 +372,7 @@ var I18N = {
     envSaveNo: 'Guardar directamente en una carpeta: no, el archivo va a Descargas',
     envGamutP3: 'La pantalla muestra Display-P3',
     envGamutSrgb: 'La pantalla muestra sRGB',
+    footerAnalytics: 'Recuento anónimo de visitas (GoatCounter, sin cookies).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -473,6 +478,7 @@ var I18N = {
     envSaveNo: 'Enregistrement direct dans un dossier : non, le fichier va dans les téléchargements',
     envGamutP3: 'L’écran affiche Display-P3',
     envGamutSrgb: 'L’écran affiche sRGB',
+    footerAnalytics: 'Comptage anonyme des visites (GoatCounter, sans cookies).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -578,6 +584,7 @@ var I18N = {
     envSaveNo: 'Salvataggio diretto in una cartella: no, il file finisce nei download',
     envGamutP3: 'Lo schermo mostra Display-P3',
     envGamutSrgb: 'Lo schermo mostra sRGB',
+    footerAnalytics: 'Conteggio anonimo delle visite (GoatCounter, senza cookie).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -683,6 +690,7 @@ var I18N = {
     envSaveNo: 'Rechtstreeks opslaan in een map: nee, het bestand komt in Downloads',
     envGamutP3: 'Beeldscherm toont Display-P3',
     envGamutSrgb: 'Beeldscherm toont sRGB',
+    footerAnalytics: 'Anonieme bezoekersteller (GoatCounter, zonder cookies).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -788,6 +796,7 @@ var I18N = {
     envSaveNo: 'Zapis bezpośrednio do folderu: nie, plik trafia do folderu Pobrane',
     envGamutP3: 'Ekran pokazuje Display-P3',
     envGamutSrgb: 'Ekran pokazuje sRGB',
+    footerAnalytics: 'Anonimowe zliczanie odwiedzin (GoatCounter, bez plików cookie).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -893,6 +902,7 @@ var I18N = {
     envSaveNo: 'Guardar diretamente numa pasta: não, o ficheiro vai para as transferências',
     envGamutP3: 'O ecrã mostra Display-P3',
     envGamutSrgb: 'O ecrã mostra sRGB',
+    footerAnalytics: 'Contagem anónima de visitas (GoatCounter, sem cookies).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -998,6 +1008,7 @@ var I18N = {
     envSaveNo: 'Doğrudan bir klasöre kaydetme: hayır, dosya İndirilenler klasörüne gider',
     envGamutP3: 'Ekran Display-P3 gösteriyor',
     envGamutSrgb: 'Ekran sRGB gösteriyor',
+    footerAnalytics: 'Anonim ziyaret sayımı (GoatCounter, çerezsiz).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -1103,6 +1114,7 @@ var I18N = {
     envSaveNo: 'Прямое сохранение в папку: нет, файл попадёт в загрузки',
     envGamutP3: 'Экран показывает Display-P3',
     envGamutSrgb: 'Экран показывает sRGB',
+    footerAnalytics: 'Анонимный подсчёт посещений (GoatCounter, без файлов cookie).',
     envLine: '{save}. {gamut}.'
   },
 
@@ -1208,6 +1220,7 @@ var I18N = {
     envSaveNo: 'सीधे किसी फ़ोल्डर में सहेजना: नहीं, फ़ाइल डाउनलोड में जाएगी',
     envGamutP3: 'स्क्रीन Display-P3 दिखाती है',
     envGamutSrgb: 'स्क्रीन sRGB दिखाती है',
+    footerAnalytics: 'विज़िट की गुमनाम गिनती (GoatCounter, बिना कुकीज़ के)।',
     envLine: '{save}. {gamut}.'
   },
 
@@ -1313,6 +1326,7 @@ var I18N = {
     envSaveNo: '直接保存到文件夹：不可以，文件会放进下载文件夹',
     envGamutP3: '屏幕显示 Display-P3',
     envGamutSrgb: '屏幕显示 sRGB',
+    footerAnalytics: '匿名访问统计（GoatCounter，无 Cookie）。',
     envLine: '{save}。{gamut}。'
   },
 
@@ -1418,6 +1432,7 @@ var I18N = {
     envSaveNo: 'フォルダーへの直接保存：できません。ファイルはダウンロードフォルダーに入ります',
     envGamutP3: '画面は Display-P3 を表示します',
     envGamutSrgb: '画面は sRGB を表示します',
+    footerAnalytics: '匿名のアクセス集計（GoatCounter、Cookieなし）。',
     envLine: '{save}。{gamut}。'
   },
 
@@ -1523,6 +1538,7 @@ var I18N = {
     envSaveNo: '폴더에 바로 저장: 불가, 파일은 다운로드 폴더로 갑니다',
     envGamutP3: '화면이 Display-P3를 표시합니다',
     envGamutSrgb: '화면이 sRGB를 표시합니다',
+    footerAnalytics: '익명 방문 집계 (GoatCounter, 쿠키 없음).',
     envLine: '{save}. {gamut}.'
   }
 };

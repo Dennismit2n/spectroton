@@ -274,7 +274,18 @@ function renderRamp(ramp, host, ci) {
     const v2 = apcaMode ? Math.round(Math.abs(s.ab)) : fmtNum(s.cb);
     const f1 = apcaMode ? Math.abs(s.aw) < 30 : s.cw < 3;
     const f2 = apcaMode ? Math.abs(s.ab) < 30 : s.cb < 3;
-    const flag = s.clipped ? `<span class="flag">${s.p3only ? "P3" : "eng"}</span>` : "";
+    /* Schild an Stufen, deren Buntheit für sRGB gekappt wurde. Die Zeile ist
+       role="button" mit eigenem aria-label, ihr Inhalt wird also nie vorgelesen —
+       die Erklärung hängt deshalb per aria-describedby an der Zeile selbst. */
+    let flag = "";
+    if (s.clipped) {
+      const key = s.p3only ? "flagP3" : "flagClipped";
+      const desc = escapeHtml(i18n.t(key + "Desc"));
+      const id = `flag-${ci}-${s.step}`;
+      flag = `<span class="flag" title="${desc}" aria-hidden="true">${escapeHtml(i18n.t(key))}</span>` +
+             `<span class="sr-only" id="${id}">${desc}</span>`;
+      row.setAttribute("aria-describedby", id);
+    }
     row.innerHTML =
       `<span class="step">${s.step}</span>` +
       `<span class="hex">${s.hex}${flag}</span>` +

@@ -6,16 +6,22 @@ Eine Farbe rein, elf abgestimmte Stufen raus. Erzeugt perzeptuell gleichmäßige
 
 <table>
 <tr>
-<td align="center" width="33%">
-<img src="uebersicht.jpg" alt="Basisfarbe, Akzentfarben, Farbname, Kontrastmodus"><br>
+<td align="center" width="50%">
+<img src="uebersicht-en.webp" alt="Spectroton: die Basisfarbe als Farbfeld und HEX-Wert mit ihrer OKLCH-Angabe, darunter sieben Akzentfarben mit den vier Harmonie-Knöpfen und die Suche nach Farbnamen."><br>
 <sub>Basisfarbe · Akzentfarben · Farbname</sub>
 </td>
-<td align="center" width="33%">
-<img src="rampe.jpg" alt="Elf Stufen mit WCAG-Kontrast und Sperren"><br>
+<td align="center" width="50%">
+<img src="rampe-en.webp" alt="Die elf Stufen einer gelben Akzentfarbe von 50 bis 950, jede mit HEX-Wert, Kontrast gegen Weiß und gegen Schwarz und einem Schloss zum Sperren; an den meisten Stufen zeigt ein kleines Schild, dass die Buntheit für den Farbraum zurückgenommen wurde."><br>
 <sub>Stufen mit Kontrast und Sperren</sub>
 </td>
-<td align="center" width="33%">
-<img src="export.jpg" alt="Export, Bibliothek, Zurücksetzen"><br>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img src="feinjustage-en.webp" alt="Die Feinjustage mit vier Reglern: hellste Stufe, dunkelste Stufe, Buntheit und Farbdrift über die Rampe."><br>
+<sub>Feinjustage</sub>
+</td>
+<td align="center" width="50%">
+<img src="export-en.webp" alt="Der Export: Name und Dateiname, die vier Formate CSS, Tailwind, Tokens und HEX, eine Vorschau der fertigen Liste und darunter Speichern, Kopieren, Teilen und Link kopieren."><br>
 <sub>Export · Bibliothek</sub>
 </td>
 </tr>

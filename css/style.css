@@ -378,13 +378,30 @@
   }
   .row .cw, .row .cb { text-align: right; font-size: 0.8rem; opacity: 0.9; }
   .row .fail { opacity: 0.42; }
-  .row .flag {
+  .flag {
     font-size: 0.68rem;
     border: 1px solid currentColor;
     border-radius: 4px;
     padding: 0 4px;
     opacity: 0.75;
-    cursor: help;
+  }
+  .row .flag { cursor: help; }
+
+  /* Legende unter der Rampe. Mit Maus erklärt das title am Schild; die Legende
+     braucht es nur auf Geräten ohne Hover, also Handy und Tablet. */
+  .ramp-legend {
+    margin-top: 10px;
+    padding-left: 2px;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+  .ramp-legend p { margin: 0 0 4px; }
+  .ramp-legend p:last-child { margin-bottom: 0; }
+  .ramp-legend .legend-item { display: flex; gap: 6px; align-items: baseline; }
+  .ramp-legend .flag { flex: none; opacity: 1; white-space: nowrap; }
+  @media (hover: hover) and (pointer: fine) {
+    .ramp-legend { display: none; }
   }
   /* Das Schild ist je nach Sprache bis zu neun Zeichen lang. Auf schmalen
      Bildschirmen steht es deshalb unter dem HEX-Wert, bei allen Zeilen gleich —

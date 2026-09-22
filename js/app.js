@@ -390,11 +390,27 @@ function renderAllRamps() {
     section.innerHTML =
       `<h2>${colorLabel(i)} · ${c.hex}</h2>` +
       `<div class="ramp-head"><span>${i18n.t("rampStep")}</span><span>${i18n.t("rampColor")}</span><span>${i18n.t("rampWhite")}</span><span>${i18n.t("rampBlack")}</span><span></span></div>` +
-      `<div class="ramp"></div>`;
+      `<div class="ramp"></div>` +
+      rampLegend(ramp);
     renderRamp(ramp, section.querySelector(".ramp"), i);
     host.appendChild(section);
   });
   return results;
+}
+
+/* Legende unter der Rampe: nennt nur die Schilder, die in dieser Rampe vorkommen.
+   Gedacht für Touch-Geräte, wo das title am Schild nie erscheint — mit Maus
+   blendet das CSS sie aus. */
+function rampLegend(ramp) {
+  const clipped = ramp.some(s => s.clipped && !s.p3only);
+  const p3 = ramp.some(s => s.p3only);
+  if (!clipped && !p3) return "";
+  const item = (flagKey, textKey) =>
+    `<p class="legend-item"><span class="flag">${escapeHtml(i18n.t(flagKey))}</span> <span>${escapeHtml(i18n.t(textKey))}</span></p>`;
+  return `<div class="ramp-legend"><p>${escapeHtml(i18n.t("legendLead"))}</p>` +
+    (clipped ? item("flagClipped", "legendClipped") : "") +
+    (p3 ? item("flagP3", "legendP3") : "") +
+    `</div>`;
 }
 
 function exportText(results) {

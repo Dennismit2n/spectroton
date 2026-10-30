@@ -147,6 +147,34 @@
     text-overflow: ellipsis;
   }
 
+  /* Knopf „Installieren“: sieht aus wie die Waehler daneben und erscheint erst,
+     wenn der Browser die Installation anbietet (siehe app.js). Am Telefon
+     bekommt er eine eigene, volle Zeile ueber den Waehlern. */
+  .install-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 6px 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .install-btn[hidden] { display: none; }
+  .install-btn svg { flex: none; width: 16px; height: 16px; }
+  @media (max-width: 560px) {
+    .topbar-tools { flex: 1 1 100%; flex-wrap: wrap; }
+    .install-btn { flex: 1 1 100%; }
+  }
+
   .card > summary {
     font-size: 0.85rem;
     font-weight: 600;

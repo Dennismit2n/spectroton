@@ -19,6 +19,8 @@
 var I18N = {
   de: {
     _name: 'Deutsch',
+    installBtn: 'Installieren',
+    installDone: 'Als App installiert.',
 
     /* ---------- Kopfzeile ---------- */
     appName: 'Spectroton',
@@ -166,6 +168,8 @@ var I18N = {
 
   en: {
     _name: 'English',
+    installBtn: 'Install',
+    installDone: 'Installed as an app.',
     appName: 'Spectroton',
     docTitle: 'OKLCH color ramps',
     tagline: 'One color in, eleven matching steps out. Works in OKLCH, checks against WCAG 2.2, runs offline.',
@@ -272,6 +276,8 @@ var I18N = {
 
   es: {
     _name: 'Español',
+    installBtn: 'Instalar',
+    installDone: 'Instalación completada.',
     appName: 'Spectroton',
     docTitle: 'Rampas de color OKLCH',
     tagline: 'Entra un color, salen once pasos armonizados. Calcula en OKLCH, comprueba según WCAG 2.2, funciona sin conexión.',
@@ -378,6 +384,8 @@ var I18N = {
 
   fr: {
     _name: 'Français',
+    installBtn: 'Installer',
+    installDone: 'Installation terminée.',
     appName: 'Spectroton',
     docTitle: 'Rampes de couleurs OKLCH',
     tagline: 'Une couleur en entrée, onze paliers accordés en sortie. Calcule en OKLCH, vérifie selon WCAG 2.2, fonctionne hors ligne.',
@@ -484,6 +492,8 @@ var I18N = {
 
   it: {
     _name: 'Italiano',
+    installBtn: 'Installa',
+    installDone: 'Installazione completata.',
     appName: 'Spectroton',
     docTitle: 'Scale di colore OKLCH',
     tagline: 'Un colore in entrata, undici gradini armonizzati in uscita. Calcola in OKLCH, verifica secondo WCAG 2.2, funziona offline.',
@@ -590,6 +600,8 @@ var I18N = {
 
   nl: {
     _name: 'Nederlands',
+    installBtn: 'Installeren',
+    installDone: 'Als app geïnstalleerd.',
     appName: 'Spectroton',
     docTitle: 'OKLCH-kleurschalen',
     tagline: 'Eén kleur erin, elf afgestemde stappen eruit. Rekent in OKLCH, toetst aan WCAG 2.2, werkt offline.',
@@ -696,6 +708,8 @@ var I18N = {
 
   pl: {
     _name: 'Polski',
+    installBtn: 'Zainstaluj',
+    installDone: 'Zainstalowano jako aplikację.',
     appName: 'Spectroton',
     docTitle: 'Skale kolorów OKLCH',
     tagline: 'Jeden kolor na wejściu, jedenaście dopasowanych stopni na wyjściu. Liczy w OKLCH, sprawdza według WCAG 2.2, działa offline.',
@@ -802,6 +816,8 @@ var I18N = {
 
   pt: {
     _name: 'Português',
+    installBtn: 'Instalar',
+    installDone: 'Instalação concluída.',
     appName: 'Spectroton',
     docTitle: 'Rampas de cor OKLCH',
     tagline: 'Uma cor entra, onze níveis afinados saem. Calcula em OKLCH, verifica segundo a WCAG 2.2, funciona offline.',
@@ -908,6 +924,8 @@ var I18N = {
 
   tr: {
     _name: 'Türkçe',
+    installBtn: 'Yükle',
+    installDone: 'Uygulama olarak yüklendi.',
     appName: 'Spectroton',
     docTitle: 'OKLCH renk rampaları',
     tagline: 'Bir renk girer, uyumlu on bir adım çıkar. OKLCH ile hesaplar, WCAG 2.2’ye göre denetler, çevrimdışı çalışır.',
@@ -1014,6 +1032,8 @@ var I18N = {
 
   ru: {
     _name: 'Русский',
+    installBtn: 'Установить',
+    installDone: 'Установлено как приложение.',
     appName: 'Spectroton',
     docTitle: 'Цветовые шкалы OKLCH',
     tagline: 'Один цвет на входе — одиннадцать согласованных ступеней на выходе. Считает в OKLCH, проверяет по WCAG 2.2, работает офлайн.',
@@ -1120,6 +1140,8 @@ var I18N = {
 
   hi: {
     _name: 'हिन्दी',
+    installBtn: 'इंस्टॉल करें',
+    installDone: 'ऐप के रूप में इंस्टॉल हो गया।',
     appName: 'Spectroton',
     docTitle: 'OKLCH रंग शृंखलाएँ',
     tagline: 'एक रंग दीजिए, ग्यारह मेल खाती सीढ़ियाँ पाइए। गणना OKLCH में, जाँच WCAG 2.2 से, ऑफ़लाइन भी चलता है।',
@@ -1226,6 +1248,8 @@ var I18N = {
 
   zh: {
     _name: '简体中文',
+    installBtn: '安装',
+    installDone: '已作为应用安装。',
     appName: 'Spectroton',
     docTitle: 'OKLCH 色阶',
     tagline: '输入一种颜色，输出十一级协调色阶。以 OKLCH 计算，按 WCAG 2.2 检查，可离线运行。',
@@ -1332,6 +1356,8 @@ var I18N = {
 
   ja: {
     _name: '日本語',
+    installBtn: 'インストール',
+    installDone: 'アプリとしてインストールしました。',
     appName: 'Spectroton',
     docTitle: 'OKLCH カラーランプ',
     tagline: '色をひとつ入れると、調和した11段階が出てきます。OKLCH で計算し、WCAG 2.2 で確認し、オフラインでも動きます。',
@@ -1438,6 +1464,8 @@ var I18N = {
 
   ko: {
     _name: '한국어',
+    installBtn: '설치',
+    installDone: '앱으로 설치되었습니다.',
     appName: 'Spectroton',
     docTitle: 'OKLCH 색 단계',
     tagline: '색 하나를 넣으면 어울리는 열한 단계가 나옵니다. OKLCH로 계산하고 WCAG 2.2로 확인하며 오프라인에서도 작동합니다.',

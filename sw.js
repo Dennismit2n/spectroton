@@ -1,6 +1,6 @@
 /* Spectroton — Service Worker
    Version bei jeder Änderung hochzählen, sonst bleibt die alte App im Cache. */
-const VERSION = "spectroton-v8";
+const VERSION = "spectroton-v9";
 const SHELL = VERSION + "-shell";
 const NAMES = VERSION + "-names";
 
@@ -18,7 +18,9 @@ self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== SHELL && k !== NAMES).map(k => caches.delete(k))
+        // Nur eigene alte Caches: Alle Werkzeuge liegen auf dennismit2n.github.io und teilen
+        // sich den Cache-Speicher, ein fremder Name gehoert einer Geschwister-App.
+        keys.filter(k => k.startsWith("spectroton-") && k !== SHELL && k !== NAMES).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );

@@ -964,6 +964,32 @@ if (window.matchMedia) {
 }
 $("theme").addEventListener("change", e => setTheme(e.target.value));
 
+/* ---------- Knopf „Installieren“ ----------
+   Erscheint erst, wenn der Browser die Installation anbietet (das Ereignis hebt das Skript
+   im Kopf auf), und oeffnet dann dessen Installationsdialog. Ein Ereignis reicht fuer einen
+   Dialog: Nach einem Abbruch kommt der Knopf wieder, sobald der Browser ein neues schickt.
+   In der installierten App bleibt er weg. */
+(() => {
+  const btn = $("installBtn");
+  if (!btn) return;
+  const alsApp = () => (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+  const zeigen = () => { btn.hidden = !window.deferredInstall || alsApp(); };
+  window.onInstallReady = zeigen;
+  btn.addEventListener("click", () => {
+    const evt = window.deferredInstall;
+    window.deferredInstall = null;
+    zeigen();
+    if (!evt) return;
+    try { const p = evt.prompt(); if (p && p.catch) p.catch(() => {}); } catch { /* kein Dialog verfuegbar */ }
+  });
+  window.addEventListener("appinstalled", () => {
+    window.deferredInstall = null;
+    zeigen();
+    note(i18n.t("installDone"));
+  });
+  zeigen();
+})();
+
 /* ---------- Als App installierbar machen ---------- */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

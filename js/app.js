@@ -637,7 +637,8 @@ $("save").addEventListener("click", async () => {
 })();
 
 /* Fußzeile: was diese Umgebung tatsächlich kann.
-   Benannt statt sofort ausgefuehrt, damit der Sprachwechsel sie erneut aufrufen kann. */
+   Läuft erst aus initLanguage(), nach der Spracherkennung, und bei jedem Sprachwechsel
+   erneut. Sofort ausgeführt stand sie für jeden Besucher beim ersten Öffnen auf Deutsch. */
 function envLine() {
   const bits = [];
   bits.push(i18n.t("showSaveFilePicker" in window ? "envSaveYes" : "envSaveNo"));
@@ -646,7 +647,6 @@ function envLine() {
      Chinesisch setzen einen anderen Schlusspunkt als die uebrigen. */
   $("env").textContent = i18n.fmt("envLine", { save: bits[0], gamut: bits[1] });
 }
-envLine();
 
 /* ---------- Farbnamen über api.color.pizza ---------- */
 
@@ -1038,6 +1038,7 @@ function initLanguage() {
   const lang = i18n.detect();
   sel.value = lang;
   i18n.apply(lang);
+  envLine();
   sel.addEventListener("change", () => {
     i18n.apply(sel.value);
     /* Was im Markup steht, hat apply() erledigt. Alles zur Laufzeit

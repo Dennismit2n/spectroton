@@ -10,7 +10,10 @@
     --rim: rgba(0,0,0,0.12);
     --ink: #1a1b1e;
     --ink-dim: #5a5f68;
-    --ink-faint: #8b909a;
+    /* Leiseste Schrift: so weit nachgedunkelt bzw. aufgehellt, dass sie auf
+       jeder Fläche 4,5:1 hält, auch auf --panel-2 (Treffer der Farbsuche).
+       Vorher hell 2,76 bis 3,20, weich 3,20 bis 4,24, hart 3,13 bis 3,77. */
+    --ink-faint: #686c76;
     --focus: #2b6cb0;
     --r: 10px;
     --row-h: 54px;
@@ -27,7 +30,7 @@
       --rim: rgba(255,255,255,0.18);
       --ink: #f0f1f3;
       --ink-dim: #b7bcc4;
-      --ink-faint: #888e97;
+      --ink-faint: #a3aab3;
       --focus: #8fd0ff;
     }
   }
@@ -36,17 +39,17 @@
   html[data-theme="light"] {
     color-scheme: light;
     --bg: #f2f3f5; --panel: #ffffff; --panel-2: #eceef1; --line: #dcdfe3; --rim: rgba(0,0,0,0.12);
-    --ink: #1a1b1e; --ink-dim: #5a5f68; --ink-faint: #8b909a; --focus: #2b6cb0;
+    --ink: #1a1b1e; --ink-dim: #5a5f68; --ink-faint: #686c76; --focus: #2b6cb0;
   }
   html[data-theme="soft-dark"] {
     color-scheme: dark;
     --bg: #2a2c30; --panel: #34373c; --panel-2: #3c3f45; --line: #4a4e55; --rim: rgba(255,255,255,0.18);
-    --ink: #f0f1f3; --ink-dim: #b7bcc4; --ink-faint: #888e97; --focus: #8fd0ff;
+    --ink: #f0f1f3; --ink-dim: #b7bcc4; --ink-faint: #a3aab3; --focus: #8fd0ff;
   }
   html[data-theme="dark"] {
     color-scheme: dark;
     --bg: #17181a; --panel: #202225; --panel-2: #26282c; --line: #33363b; --rim: rgba(255,255,255,0.18);
-    --ink: #eceef1; --ink-dim: #9aa0a8; --ink-faint: #6e747c; --focus: #7cc4ff;
+    --ink: #eceef1; --ink-dim: #9aa0a8; --ink-faint: #888f97; --focus: #7cc4ff;
   }
 
   .sr-only {
@@ -594,14 +597,14 @@
      ein zweites Mal umgedreht und bleiben so echt. */
   :root[data-vision="invert"] { filter: invert(1); }
   :root[data-vision="invert"] :is(img:not([src*=".svg"]), video, [data-echt], .ramp, #swatch, .lib-dots, .accent-chip input[type="color"], .hit .dot):not([data-echt] *, .ramp *) { filter: invert(1); }
-  /* Umdrehen erhält den WCAG-Kontrast nicht. Die leiseste Schrift lag schon
-     vorher unter 4,5 (3,20 hell, 3,62 im weichen Dunkel) und fiele umgedreht
-     auf 2,66 bzw. 3,91 gegen den Seitengrund; hier hält sie 4,6. */
+  /* Umdrehen erhält den WCAG-Kontrast nicht. Die leiseste Schrift wird für
+     die Umkehr eigens angesetzt: so, dass sie umgedreht auf jeder Fläche
+     (auch --panel-2) mindestens 4,5 hält, aber nicht heller wirkt als nötig. */
   @media (prefers-color-scheme: dark) {
     :root[data-vision="invert"] { --ink-faint: #ACB2BB; }
   }
   @media not (prefers-color-scheme: dark) {
-    :root[data-vision="invert"] { --ink-faint: #80848E; }
+    :root[data-vision="invert"] { --ink-faint: #80838D; }
   }
   @media print {
     :root[data-vision="invert"],

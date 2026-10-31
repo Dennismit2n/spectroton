@@ -23,16 +23,27 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="./manifest.webmanifest">
 <script>
-/* Vor dem ersten Rendern: gespeichertes Theme sofort setzen, sonst blitzt kurz das Standard-Theme auf. */
+/* Vor dem ersten Rendern: gespeichertes Theme sofort setzen, sonst blitzt kurz das Standard-Theme auf.
+   Seit 31.10.2026 die gemeinsame Wahl aller Werkzeuge (werkstatt.darstellung, sonst der alte
+   Schlüssel). data-vision trägt Hoher Kontrast, Farbenblind und Umkehr; dieselbe Auflösung steht
+   in js/app.js (resolveTheme). Nur Spectroton kennt „soft-dark“, die anderen lesen es als Dunkel. */
 (function () {
   try {
-    var v = localStorage.getItem("spectroton.theme.v1");
-    var bg = { light: "#f2f3f5", dark: "#17181a", "soft-dark": "#2a2c30" };
-    if (bg[v]) {
-      document.documentElement.setAttribute("data-theme", v);
-      var m = document.querySelector('meta[name="theme-color"]');
-      if (m) m.setAttribute("content", bg[v]);
-    }
+    var v = localStorage.getItem("werkstatt.darstellung") || localStorage.getItem("spectroton.theme.v1");
+    var r = document.documentElement, mm = window.matchMedia, t = null, s = null;
+    var d = !!(mm && mm("(prefers-color-scheme: dark)").matches), k = !!(mm && mm("(prefers-contrast: more)").matches);
+    if (v === "light" || v === "dark" || v === "soft-dark") t = v;
+    else if (v === "hc-dark" || v === "hc-light") { t = v.slice(3); s = "contrast"; }
+    else if (v === "cvd-dark" || v === "cvd-light") { t = v.slice(4); s = "cvd"; }
+    else if (v === "invert") s = "invert";
+    else if (v && /dark/.test(v)) t = "dark";
+    else if (v && /light/.test(v)) t = "light";
+    else if (k) { t = d ? "dark" : "light"; s = "contrast"; }
+    if (t) r.setAttribute("data-theme", t);
+    if (s) r.setAttribute("data-vision", s);
+    var bg = s === "contrast" ? { light: "#ffffff", dark: "#000000" } : { light: "#f2f3f5", dark: "#17181a", "soft-dark": "#2a2c30" };
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (t && m && bg[t]) m.setAttribute("content", bg[t]);
   } catch (e) {}
 })();
 </script>
@@ -76,6 +87,11 @@ window.addEventListener("beforeinstallprompt", function (e) {
     <option value="light" data-i18n="themeLight">Hell</option>
     <option value="soft-dark" data-i18n="themeSoftDark">Helleres Dunkel</option>
     <option value="dark" data-i18n="themeDark">Dunkel</option>
+    <option value="hc-dark" data-i18n="themeHcDark">Hoher Kontrast dunkel</option>
+    <option value="hc-light" data-i18n="themeHcLight">Hoher Kontrast hell</option>
+    <option value="cvd-dark" data-i18n="themeCvdDark">Farbenblind dunkel</option>
+    <option value="cvd-light" data-i18n="themeCvdLight">Farbenblind hell</option>
+    <option value="invert" data-i18n="themeInvert">Umgekehrte Farben</option>
   </select>
   <label for="langSelect" class="sr-only" data-i18n="langLabel">Sprache</label>
   <select id="langSelect" data-i18n-aria="langLabel"></select>

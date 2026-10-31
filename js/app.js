@@ -927,22 +927,48 @@ function importFromHash() {
 
 /* ---------- Erscheinungsbild ---------- */
 
-const THEME_KEY = "spectroton.theme.v1";
+/* Darstellung: eine Wahl für die ganze Werkstatt (31.10.2026). Alle Werkzeuge
+   liegen auf einem Ursprung und lesen werkstatt.darstellung; der alte Schlüssel
+   gilt nur noch als Rückfall. data-theme trägt hell/„soft-dark“/dunkel,
+   data-vision Hoher Kontrast (contrast), Farbenblind (cvd) und Umkehr (invert).
+   „soft-dark“ kennt nur Spectroton, die anderen lesen es als Dunkel. Dieselbe
+   Auflösung steht im Kopf-Skript von index.html. Gespeichert wird nur auf eine
+   echte Wahl hin, nie beim Laden. */
+const THEME_KEY = "werkstatt.darstellung";
+const OLD_THEME_KEY = "spectroton.theme.v1";
 const THEME_BG = { light: "#f2f3f5", dark: "#17181a", "soft-dark": "#2a2c30" };
-const THEME_VALUES = ["system", "light", "soft-dark", "dark"];
+const THEME_VALUES = ["system", "light", "soft-dark", "dark", "hc-dark", "hc-light", "cvd-dark", "cvd-light", "invert"];
 
+function storedTheme() {
+  let v = null;
+  try { v = localStorage.getItem(THEME_KEY) || localStorage.getItem(OLD_THEME_KEY); } catch { /* kein Zugriff — Standard bleibt System */ }
+  if (THEME_VALUES.includes(v)) return v;
+  if (/dark/.test(v || "")) return "dark";
+  if (/light/.test(v || "")) return "light";
+  return "system";
+}
+function resolveTheme(pref) {
+  const media = q => !!(window.matchMedia && window.matchMedia(q).matches);
+  if (pref === "light" || pref === "dark" || pref === "soft-dark") return { theme: pref, vision: null };
+  if (pref === "hc-dark" || pref === "hc-light") return { theme: pref.slice(3), vision: "contrast" };
+  if (pref === "cvd-dark" || pref === "cvd-light") return { theme: pref.slice(4), vision: "cvd" };
+  if (pref === "invert") return { theme: null, vision: "invert" };
+  if (media("(prefers-contrast: more)")) return { theme: media("(prefers-color-scheme: dark)") ? "dark" : "light", vision: "contrast" };
+  return { theme: null, vision: null };
+}
+function applyTheme(pref) {
+  const { theme, vision } = resolveTheme(pref);
+  const html = document.documentElement;
+  if (theme) html.setAttribute("data-theme", theme); else html.removeAttribute("data-theme");
+  if (vision) html.setAttribute("data-vision", vision); else html.removeAttribute("data-vision");
+  const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (vision === "contrast") setThemeColorMeta(theme === "dark" ? "#000000" : "#ffffff");
+  else setThemeColorMeta(theme ? THEME_BG[theme] : (dark ? THEME_BG["soft-dark"] : THEME_BG.light));
+  $("theme").value = pref;
+}
 function setTheme(pref) {
   if (!THEME_VALUES.includes(pref)) pref = "system";
-  const html = document.documentElement;
-  if (pref === "system") {
-    html.removeAttribute("data-theme");
-    const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setThemeColorMeta(dark ? THEME_BG["soft-dark"] : THEME_BG.light);
-  } else {
-    html.setAttribute("data-theme", pref);
-    setThemeColorMeta(THEME_BG[pref]);
-  }
-  $("theme").value = pref;
+  applyTheme(pref);
   try { localStorage.setItem(THEME_KEY, pref); } catch { /* privater Modus — dann eben nur für diese Sitzung */ }
 }
 function setThemeColorMeta(hex) {
@@ -950,19 +976,20 @@ function setThemeColorMeta(hex) {
   if (m) m.setAttribute("content", hex);
 }
 function initTheme() {
-  let v = "system";
-  try {
-    const stored = localStorage.getItem(THEME_KEY);
-    if (THEME_VALUES.includes(stored)) v = stored;
-  } catch { /* nichts gespeichert oder kein Zugriff — Standard bleibt System */ }
-  setTheme(v);
+  applyTheme(storedTheme());
 }
 if (window.matchMedia) {
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    if ($("theme").value === "system") setTheme("system");
+  // „System“ folgt dem Gerät live, auch bei „Kontrast erhöhen“
+  ["(prefers-color-scheme: dark)", "(prefers-contrast: more)"].forEach(q => {
+    window.matchMedia(q).addEventListener("change", () => {
+      if ($("theme").value === "system") applyTheme("system");
+    });
   });
 }
 $("theme").addEventListener("change", e => setTheme(e.target.value));
+// Eine Wahl in einem anderen Werkzeug-Tab oder vor dem Zurückkommen
+window.addEventListener("storage", e => { if (e.key === THEME_KEY) applyTheme(storedTheme()); });
+window.addEventListener("pageshow", e => { if (e.persisted) applyTheme(storedTheme()); });
 
 /* ---------- Knopf „Installieren“ ----------
    Erscheint erst, wenn der Browser die Installation anbietet (das Ereignis hebt das Skript

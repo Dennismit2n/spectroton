@@ -551,3 +551,59 @@
     #note { transition: none; }
     .btn:active { transform: none; }
   }
+
+  /* --- Durchgefallene Kontrastwerte: Zeichen statt nur blasser ---
+     (31.10.2026) Bisher waren Werte unter der Schwelle nur blasser
+     gesetzt (42 %). Das sagt etwas allein über die Darstellung, also kommt
+     eine Durchstreichung dazu, in jedem Modus. */
+  .row .fail { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+
+  /* --- Sehhilfen: Hoher Kontrast, Farbenblind, Umgekehrte Farben ---
+     (31.10.2026) Eine Wahl für die ganze Werkstatt: localStorage
+     „werkstatt.darstellung“, alle Werkzeuge liegen auf einem Ursprung. Das
+     Kopf-Skript setzt data-theme (light/soft-dark/dark, wie bisher) und
+     data-vision (contrast, cvd, invert). Die Themen-Blöcke oben bleiben, wie
+     sie sind. DEINE Farben (Stufen, Basisfarbe, Akzente, gespeicherte
+     Paletten, Farbtreffer) verändert kein Modus: sie stehen als Inline-Stil
+     da, und bei Umkehr werden sie ein zweites Mal umgedreht. */
+
+  /* Hoher Kontrast dunkel: Schwarz, Schrift #E0E0E0 (15,91:1), jede Schrift
+     mindestens 7:1 auch auf der zweiten Fläche (#121212) */
+  :root[data-vision="contrast"][data-theme="dark"] {
+    --bg: #000000; --panel: #000000; --panel-2: #121212; --line: #A0A0A0; --rim: rgba(255,255,255,0.55);
+    --ink: #E0E0E0; --ink-dim: #C4C4C4; --ink-faint: #ADADAD; --focus: #8FD0FF;
+  }
+  /* Hoher Kontrast hell: Weiß, Schrift Schwarz */
+  :root[data-vision="contrast"][data-theme="light"] {
+    --bg: #FFFFFF; --panel: #FFFFFF; --panel-2: #EFEFEF; --line: #585757; --rim: rgba(0,0,0,0.55);
+    --ink: #000000; --ink-dim: #2B2B2B; --ink-faint: #474747; --focus: #054F91;
+  }
+  :root[data-vision="contrast"] .aurora { display: none; }
+  :root[data-vision="contrast"] :is(.card, .ramp, .hit, .harmony-btn, .tab, .btn, .install-btn, #theme, #langSelect, select, input:not([type="color"]):not([type="checkbox"]):not([type="radio"])) { border-width: 2px; }
+  /* Auf deinen Farbstufen steht die Schrift schwarz oder weiß, je nachdem was
+     besser liest; gedämpft wird im Hohen Kontrast nichts mehr */
+  :root[data-vision="contrast"] :is(.row .step, .row .cw, .row .cb, .row .fail, .flag, .row .lock) { opacity: 1; }
+  :root[data-vision="contrast"] :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  :root[data-vision="contrast"] footer a { text-decoration: underline; }
+
+  /* Farbenblind: Spectroton trägt keine Bedeutungsfarben (durchgefallene
+     Werte sind blasser UND durchgestrichen), und deine Farben bleiben, wie
+     sie sind. Hier gibt es nichts zu tauschen. */
+
+  /* Umgekehrte Farben wie der Farbfilter von Windows. Deine Farben werden
+     ein zweites Mal umgedreht und bleiben so echt. */
+  :root[data-vision="invert"] { filter: invert(1); }
+  :root[data-vision="invert"] :is(img:not([src*=".svg"]), video, [data-echt], .ramp, #swatch, .lib-dots, .accent-chip input[type="color"], .hit .dot):not([data-echt] *, .ramp *) { filter: invert(1); }
+  /* Umdrehen erhält den WCAG-Kontrast nicht. Die leiseste Schrift lag schon
+     vorher unter 4,5 (3,20 hell, 3,62 im weichen Dunkel) und fiele umgedreht
+     auf 2,66 bzw. 3,91 gegen den Seitengrund; hier hält sie 4,6. */
+  @media (prefers-color-scheme: dark) {
+    :root[data-vision="invert"] { --ink-faint: #ACB2BB; }
+  }
+  @media not (prefers-color-scheme: dark) {
+    :root[data-vision="invert"] { --ink-faint: #80848E; }
+  }
+  @media print {
+    :root[data-vision="invert"],
+    :root[data-vision="invert"] :is(img:not([src*=".svg"]), video, [data-echt], .ramp, #swatch, .lib-dots, .accent-chip input[type="color"], .hit .dot):not([data-echt] *, .ramp *) { filter: none; }
+  }

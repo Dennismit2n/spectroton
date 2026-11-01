@@ -1,5 +1,5 @@
 {
-  "name": "Spectroton — OKLCH-Farbrampen",
+  "name": "Spectroton · OKLCH-Farbrampen",
   "short_name": "Spectroton",
   "description": "Eine Farbe rein, elf abgestimmte Stufen raus. Rechnet in OKLCH, prueft nach WCAG 2.2, laeuft offline.",
   "start_url": "./",

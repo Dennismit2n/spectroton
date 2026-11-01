@@ -1,6 +1,6 @@
 /* Spectroton — Service Worker
    Version bei jeder Änderung hochzählen, sonst bleibt die alte App im Cache. */
-const VERSION = "spectroton-v13";
+const VERSION = "spectroton-v14";
 const SHELL = VERSION + "-shell";
 const NAMES = VERSION + "-names";
 

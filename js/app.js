@@ -457,7 +457,7 @@ function exportText(results) {
   }
 
   if (total === 1) return results[0].ramp.map(s => s.hex).join("\n") + "\n";
-  return results.map(r => `# ${r.label} — ${r.hex}\n` + r.ramp.map(s => s.hex).join("\n")).join("\n\n") + "\n";
+  return results.map(r => `# ${r.label}: ${r.hex}\n` + r.ramp.map(s => s.hex).join("\n")).join("\n\n") + "\n";
 }
 
 /* Aurora nutzt die echten Akzentfarben, sobald welche existieren;

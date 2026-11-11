@@ -699,5 +699,8 @@ select {
 .btn.primary { background: var(--beschlag), var(--ink); }
 /* Hoher Kontrast kennt keine Schatten, der Beschlag bleibt. Gedruckt wird ohne beides. */
 :root[data-vision="contrast"] :is(.install-btn, .card, .tab, .btn) { box-shadow: none; }
+@media print {
+  .install-btn, .card, input[type="text"], textarea, select, .tab, .btn { background-image: none !important; box-shadow: none !important; }
+}
 /* Farbfelder und Rampen bleiben ohne Beschlag: Sie sind der Inhalt, an ihnen wird Farbe beurteilt. */
 /* Ende Beschlag */
